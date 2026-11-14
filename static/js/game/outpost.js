@@ -80,7 +80,7 @@
   // Efeito da opção escolhida na carta do turno ({} se não há carta ou escolha)
   function efeitoEscolhido(e) {
     const ev = e.evento;
-    return ev && ev.visivel && ev.escolha ? ARES.eventos.efeitoDe(ev.tipo, ev.escolha) : {};
+    return ev && ev.visivel && ev.escolha ? ARES.eventos.efeitoDe(ev.tipo, ev.escolha, ev.desempenho) : {};
   }
 
   // A carta está na tela esperando uma escolha?
@@ -90,10 +90,12 @@
   }
 
   // Botão da carta: escolhe (ou troca) a opção. Devolve true se mudou.
-  function escolher(e, id) {
+  // desempenho = nota do minigame (0 a 1). Sem nota (opção passiva ou minigame pulado), vale o padrão.
+  function escolher(e, id, desempenho) {
     const ev = e.evento;
     if (!ev || !ev.visivel || !ev.opcoes || !ev.opcoes.includes(id)) return false;
     ev.escolha = id;
+    ev.desempenho = typeof desempenho === "number" && isFinite(desempenho) ? limitar(desempenho, 0, 1) : null;
     encaixarEnergia(e);
     return true;
   }
@@ -187,7 +189,7 @@
       fase: e.fase,
       rotulo: quando,
       alocacao: Object.assign({}, e.alocacao),
-      evento: ev ? { tipo: ev.tipo, nivel: ev.nivel || null, visivel: ev.visivel, escolha: ev.escolha || null } : null,
+      evento: ev ? { tipo: ev.tipo, nivel: ev.nivel || null, visivel: ev.visivel, escolha: ev.escolha || null, desempenho: ev.desempenho ?? null } : null,
       o2: r.o2,
       comida: r.comida,
       dose: decimo(r.fundo + r.tempestade),
@@ -210,6 +212,9 @@
       anotar((e.fase === "viagem" ? "log_calmo_" : "log_base_") + (id % 3));
     }
     if (ev && ev.visivel && ev.escolha) anotar("log_escolha", { op: ev.escolha });
+    if (ev && ev.visivel && ev.escolha && ev.desempenho != null) {
+      anotar("log_minigame", { pct: Math.round(ev.desempenho * 100) });
+    }
     if (e.alocacao.comms >= 1) {
       anotar("log_terra", { fato: e.fatosRecebidos % ARES.eventos.TOTAL_FATOS });
       e.fatosRecebidos += 1;
@@ -275,6 +280,14 @@
 
     if (e.rad < CONFIG.doseBoa) certo.push({ chave: "fim_certo_rad", p: { n: CONFIG.doseBoa } });
     else dica.push({ chave: "fim_dica_rad", p: { n: CONFIG.doseBoa } });
+
+    // Minigames: só comenta se a pessoa jogou pelo menos um (pular não conta)
+    const notas = h.filter((x) => x.evento && x.evento.desempenho != null).map((x) => x.evento.desempenho);
+    if (notas.length) {
+      const media = notas.reduce((a, b) => a + b, 0) / notas.length;
+      if (media >= 0.7) certo.push({ chave: "fim_certo_minigame", p: { n: notas.length } });
+      else if (media < 0.4) dica.push({ chave: "fim_dica_minigame" });
+    }
 
     if (!certo.length) certo.push({ chave: "fim_certo_tentou" });
     if (!dica.length) dica.push({ chave: "fim_dica_padrao" });

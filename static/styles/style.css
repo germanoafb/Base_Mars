@@ -39,7 +39,7 @@
   /* Pixel art: borda grossa e sombra dura (sem cantos redondos) */
   --borda: 4px;
   --bloco: 4px 4px 0 var(--sombra);
-  --toque: 3rem;             /* tamanho mínimo de botão (48px no padrão, cresce com a tela) */
+  --toque: 48px;             /* tamanho mínimo de botão (acima dos 44px pedidos) */
 
   /* Fontes */
   --fonte-titulo: "Press Start 2P", "Courier New", monospace;   /* textos curtos */
@@ -59,10 +59,7 @@
   padding: 0;
 }
 
-html {
-  -webkit-text-size-adjust: 100%;
-  font-size: 112.5%;   /* celular: 18px (antes 16px). Tudo que está em rem cresce junto */
-}
+html { -webkit-text-size-adjust: 100%; }
 
 /* Fundo: céu escuro com algumas estrelas quadradinhas */
 body {
@@ -148,14 +145,14 @@ a { color: var(--o2); }
   justify-content: space-between;
   gap: 12px;
   padding: 12px 16px;
-  max-width: 47.5rem;
+  max-width: 760px;
   width: 100%;
   margin: 0 auto;
 }
 
 .marca { display: flex; align-items: center; gap: 10px; min-width: 0; }
 
-.marca-planeta { width: 2rem; height: 2rem; image-rendering: pixelated; }
+.marca-planeta { width: 32px; height: 32px; image-rendering: pixelated; }
 
 .marca-nome {
   font-family: var(--fonte-logo);
@@ -196,7 +193,7 @@ html[lang="en"] .btn-idioma .idioma-en {
 #app {
   flex: 1;
   width: 100%;
-  max-width: 47.5rem;
+  max-width: 760px;
   margin: 0 auto;
   padding: 4px 16px 32px;
 }
@@ -227,8 +224,8 @@ html[lang="en"] .btn-idioma .idioma-en {
 
 /* ---------- 5. BOTÕES ---------- */
 .btn {
-  min-height: 3.5rem;
-  padding: .75rem 1.1rem;
+  min-height: 56px;
+  padding: 12px 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -304,7 +301,7 @@ html[lang="en"] .btn-idioma .idioma-en {
   width: 100%;
 }
 
-.tripulacao li { flex: 1 1 6rem; max-width: 10rem; display: flex; }
+.tripulacao li { flex: 1 1 96px; max-width: 160px; display: flex; }
 
 /* Cartão do astronauta = botão para escolher o personagem */
 .astronauta {
@@ -334,7 +331,7 @@ html[lang="en"] .btn-idioma .idioma-en {
   box-shadow: 0 0 0 3px var(--traje), var(--bloco);
 }
 
-.astronauta .rosto-svg { width: 4rem; height: 4rem; }
+.astronauta .rosto-svg { width: 64px; height: 64px; }
 
 .astronauta-nome { font: .75rem var(--fonte-titulo); }
 .astronauta-papel { font-size: 1rem; color: var(--texto-suave); }
@@ -347,7 +344,7 @@ html[lang="en"] .btn-idioma .idioma-en {
 
 .astronauta--escolhido .astronauta-voce { color: var(--traje); }
 
-.tela--lancamento .btn-principal { max-width: 23.75rem; }
+.tela--lancamento .btn-principal { max-width: 380px; }
 
 
 /* ---------- 7. MAPA EM PIXEL ART (canvas) ---------- */
@@ -361,7 +358,7 @@ html[lang="en"] .btn-idioma .idioma-en {
   touch-action: manipulation;
 }
 
-.mapa-canvas--enfeite { cursor: default; max-width: 32.5rem; }
+.mapa-canvas--enfeite { cursor: default; max-width: 520px; }
 
 /* Selo de ciência: pontos enviados / meta */
 .selo-ciencia {
@@ -435,8 +432,8 @@ html[lang="en"] .btn-idioma .idioma-en {
 }
 
 .rosto-svg {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 40px;
+  height: 40px;
   image-rendering: pixelated;
   border: 3px solid var(--traje, var(--linha));
   background: var(--fundo);
@@ -585,7 +582,7 @@ html[lang="en"] .btn-idioma .idioma-en {
 /* Trilho em blocos, como barra de vida de videogame */
 .barra-trilho {
   position: relative;
-  height: .75rem;
+  height: 12px;
   background: #000;
   border: 2px solid var(--linha);
   overflow: hidden;
@@ -664,7 +661,7 @@ html[lang="en"] .btn-idioma .idioma-en {
   z-index: 30;
   top: calc(100% + 8px);
   right: -6px;
-  width: min(17.5rem, calc(100vw - 48px));
+  width: min(280px, calc(100vw - 48px));
   padding: 8px 10px;
   background: var(--texto);
   color: var(--fundo);
@@ -705,7 +702,7 @@ html[lang="en"] .btn-idioma .idioma-en {
 .escolhas { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
 
 .btn-escolha {
-  min-height: 3.5rem;
+  min-height: 56px;
   width: 100%;
   padding: 10px 12px;
   display: flex;
@@ -753,6 +750,211 @@ html[lang="en"] .btn-idioma .idioma-en {
 .dica-escolha { text-align: center; font-weight: 700; color: var(--energia); }
 
 
+/* ---------- 11b. MINIGAMES DE 15 SEGUNDOS ---------- */
+/* Opção com minigame: borda na cor da carta + selo "Minigame" */
+.btn-escolha--mini { border-color: var(--cor, var(--acento)); }
+.efeito--variavel { color: var(--energia); }
+.selo-mini {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--fundo);
+  background: var(--cor, var(--energia));
+}
+
+/* Janela por cima de tudo (o fundo não rola enquanto ela está aberta) */
+body.mini-aberto { overflow: hidden; }
+.mini-camada {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  overflow-y: auto;
+  background: rgba(10, 4, 6, .88);
+}
+
+.mini {
+  --cor: var(--energia);
+  width: min(100%, 560px);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  overflow-y: auto;
+  background: var(--cartao);
+  border: var(--borda) solid var(--cor);
+  box-shadow: var(--bloco);
+  outline: none;
+}
+.mini.evento--poeira { --cor: #f0a35e; }
+.mini.evento--solar  { --cor: var(--energia); }
+.mini.evento--filtro { --cor: var(--o2); }
+.mini.evento--praga  { --cor: var(--comida); }
+
+.mini-titulo { display: flex; align-items: center; gap: 10px; color: var(--cor); }
+.ico--titulo { width: 1.5em; height: 1.5em; flex: none; }
+.ico--grande { width: 2.4em; height: 2.4em; }
+.ico--gigante { width: 88px; height: 88px; color: var(--cor); }
+.mini-instrucao { font-weight: 700; }
+
+.mini-status { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.mini-tempo { flex: 1; height: 18px; background: var(--fundo); border: 3px solid var(--linha); }
+.mini-tempo-fill { width: 100%; height: 100%; background: var(--energia); }
+.mini-segundos { min-width: 2ch; text-align: right; }
+.mini-placar { min-height: 1.45em; color: var(--texto-suave); font-weight: 700; }
+
+/* A arena: onde o jogo acontece (touch-action: none = arrastar não rola a página) */
+.mini-arena {
+  position: relative;
+  height: 240px;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  background: #120a0e;
+  border: 3px solid var(--linha);
+}
+.mini-arena--previa { display: grid; place-items: center; height: 140px; touch-action: auto; }
+.mini-arena button { font: inherit; cursor: pointer; }
+.mini-arena button:focus-visible { outline: 4px solid #fff; outline-offset: -4px; }
+
+/* Jogo 1: painéis solares com poeira (2 camadas: mais opaca = mais poeira) */
+.arena--paineis, .arena--estufa, .arena--filtro {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 4), 1fr);
+  gap: 5px;
+  padding: 6px;
+}
+.arena--paineis { grid-template-rows: repeat(4, 1fr); }
+.cel {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  background:
+    linear-gradient(90deg, transparent 48%, #3f66c4 48% 52%, transparent 52%),
+    linear-gradient(transparent 48%, #3f66c4 48% 52%, transparent 52%),
+    #1f3a85;
+  border: 3px solid #4f8dff;
+}
+.cel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(#7a4a26 1.5px, transparent 2px) 0 0 / 7px 7px, #c98a52;
+  opacity: 0;
+  pointer-events: none;
+}
+.cel--1::after { opacity: .5; }
+.cel--2::after { opacity: .95; }
+
+/* Jogo 2: prótons caem do céu em direção ao abrigo */
+.arena--ceu { background: linear-gradient(#1b0b25, #4a2342); }
+.abrigo {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--o2);
+  background: var(--linha);
+  border-top: 4px solid var(--o2);
+}
+.arena--dano { box-shadow: inset 0 0 0 5px var(--ruim); }
+.proton {
+  position: absolute;
+  top: -52px;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  color: var(--fundo);
+  font-weight: 700;
+  font-size: 1.8rem;
+  line-height: 1;
+  background: var(--energia);
+  border: 3px solid #fff2b0;
+  box-shadow: 0 0 0 3px rgba(255, 210, 74, .35);
+  transition: top var(--vida, 2300ms) linear, transform .18s, opacity .18s;
+}
+.proton--cai { top: calc(100% - 92px); }
+.proton--ok { transform: scale(1.5); opacity: 0; background: var(--bom); }
+
+/* Jogo 3: parafusos numerados, na ordem */
+.arena--filtro { grid-template-rows: repeat(3, 1fr); gap: 8px; padding: 10px; place-items: center; }
+.parafuso {
+  width: min(100%, 60px);
+  aspect-ratio: 1;
+  padding: 0;
+  color: var(--fundo);
+  font: 700 1.3rem var(--fonte-titulo);
+  background: #9aa7bd;
+  border: 4px solid #e2e9f4;
+  box-shadow: 3px 3px 0 var(--sombra);
+}
+.parafuso--ok { background: var(--bom); border-color: #fff; opacity: .6; box-shadow: none; }
+.parafuso--ok::after { content: "✓"; font-size: .8rem; margin-left: 2px; }
+.parafuso--erro { animation: chacoalhar .3s steps(3); border-color: var(--ruim); }
+.arena--travada { outline: 4px dashed var(--ruim); outline-offset: -4px; }
+
+/* Jogo 4: folhas (as doentes têm manchas brancas e um "!") */
+.arena--estufa { grid-template-rows: repeat(3, 1fr); gap: 6px; }
+.folha {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: 0;
+  color: var(--comida);
+  background: #173a22;
+  border: 3px solid #2f7a45;
+}
+.ico--folha { width: 2.2em; height: 2.2em; }
+.folha--doente { color: #d6d6ae; background: #4a4a3a; border: 3px dashed #f1f1d8; }
+.folha--doente::after {
+  content: "!";
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  font: 700 1.1rem var(--fonte-titulo);
+  color: var(--ruim);
+}
+.folha--doente::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(#fff 2px, transparent 2.5px) 0 0 / 11px 11px;
+  opacity: .55;
+  pointer-events: none;
+}
+.folha--curada { background: #2f7a45; transform: scale(1.08); }
+.folha--erro { animation: chacoalhar .3s steps(3); border-color: var(--ruim); }
+
+/* Resultado */
+.mini-resultado { display: flex; flex-direction: column; gap: 8px; }
+.mini-nota { font: 400 1rem var(--fonte-titulo); color: var(--cor); }
+.mini-barra { height: 18px; background: var(--fundo); border: 3px solid var(--linha); }
+.mini-barra > div { height: 100%; background: var(--cor); }
+.mini-veredito { font-weight: 700; }
+.mini-efeito-titulo { color: var(--texto-suave); }
+.mini-fato { padding: 8px; font-size: 1rem; color: var(--texto-suave); border: 3px dashed var(--linha); }
+.mini-fato b { color: var(--cor); }
+
+.mini-acoes { display: flex; flex-wrap: wrap; gap: 10px; }
+.mini-acoes .btn { flex: 1 1 auto; }
+
+/* Celular deitado: arena mais baixa para a janela caber */
+@media (max-height: 560px) {
+  .mini-arena { height: 190px; }
+  .mini-arena--previa { height: 100px; }
+}
+
+
 /* ---------- 12. DIÁRIO DE BORDO ---------- */
 .diario-ultimo {
   display: flex;
@@ -788,7 +990,7 @@ html[lang="en"] .btn-idioma .idioma-en {
 
 /* Estrelas: 3 = missão cumprida, 2 = todos voltaram bem, 1 = encerrada mais cedo */
 .medalha { display: flex; gap: 8px; }
-.estrela { width: 3rem; height: 3rem; color: var(--linha); }
+.estrela { width: 48px; height: 48px; color: var(--linha); }
 .estrela--on { color: var(--energia); animation: pular .4s steps(4) backwards; }
 .estrela--on:nth-child(2) { animation-delay: .15s; }
 .estrela--on:nth-child(3) { animation-delay: .3s; }
@@ -833,13 +1035,13 @@ html[lang="en"] .btn-idioma .idioma-en {
 .debrief ul { padding-left: 1.2em; }
 .debrief li + li { margin-top: 6px; }
 
-.tela--fim .btn-principal { max-width: 23.75rem; }
+.tela--fim .btn-principal { max-width: 380px; }
 
 
 /* ---------- 14. RODAPÉ (fontes dos dados) ---------- */
 .rodape {
   width: 100%;
-  max-width: 47.5rem;
+  max-width: 760px;
   margin: 0 auto;
   padding: 20px 16px 28px;
   font-size: .95rem;
@@ -1031,28 +1233,25 @@ html[lang="en"] .btn-idioma .idioma-en {
   #app { padding: 8px 24px 40px; }
 
   .btn-principal,
-  .btn-secundario { max-width: 26.25rem; align-self: center; }
+  .btn-secundario { max-width: 420px; align-self: center; }
 }
 
 /* Computador e tablet deitado: mapa à esquerda, painel à direita, sem rolar */
 @media (min-width: 900px) and (min-height: 540px) {
-  /* Escala com a tela: ~18px em notebook, até 24px em monitor grande */
-  html { font-size: clamp(16px, min(1.4vw, 2.3vh), 24px); }
+  .topo { max-width: 1280px; padding: 8px 24px; }
+  #app { max-width: 1280px; padding: 0 24px 16px; }
 
-  .topo { max-width: 80rem; padding: 8px 24px; }
-  #app { max-width: 80rem; padding: 0 24px 16px; }
+  .tela--jogo { min-height: calc(100dvh - 76px); }
 
-  .tela--jogo { min-height: calc(100dvh - var(--toque) - 28px); }
-
-  .jogo-grade { flex-direction: row; align-items: center; gap: 16px; min-height: calc(100dvh - var(--toque) - 44px); }
+  .jogo-grade { flex-direction: row; align-items: center; gap: 16px; min-height: calc(100dvh - 92px); }
 
   .jogo-esquerda { flex: 1 1 auto; min-width: 0; min-height: 0; }
 
   /* Mapa e tripulação juntos, centralizados; o mapa cresce até caber na altura (16:9) */
   .jogo-esquerda { justify-content: center; }
-  .mapa-moldura { width: min(100%, calc((100dvh - 14.4rem) * 16 / 9)); }
+  .mapa-moldura { width: min(100%, calc((100dvh - 230px) * 16 / 9)); }
 
-  .jogo-direita { flex: 0 0 27.5rem; }
+  .jogo-direita { flex: 0 0 440px; }
 
   .jogo-acoes { position: static; padding: 0; }
 
@@ -1074,16 +1273,17 @@ html[lang="en"] .btn-idioma .idioma-en {
   }
 
   .carta-camada .evento { width: 100%; }
-  .rosto-svg { width: 3rem; height: 3rem; }
-
-  /* Painel largo: botões − e + e pontinhos de energia maiores */
-  .sistema .btn-passo { width: 2.75rem; height: 2.75rem; }
-  .aloc-pontos i { width: .7rem; height: 1.3rem; }
+  .rosto-svg { width: 48px; height: 48px; }
 
   /* Lançamento também lado a lado */
-  .tela--lancamento { flex-direction: row; align-items: center; text-align: left; gap: 32px; min-height: calc(100dvh - var(--toque) - 28px); }
+  .tela--lancamento { flex-direction: row; align-items: center; text-align: left; gap: 32px; min-height: calc(100dvh - 76px); }
   .tela--lancamento .mapa-canvas--enfeite { flex: 1 1 55%; max-width: none; }
   .lancamento-texto { flex: 1 1 45%; display: flex; flex-direction: column; gap: 14px; }
   .lancamento-texto .tripulacao { justify-content: flex-start; }
   .lancamento-texto .btn-principal { align-self: flex-start; }
 }
+
+
+/* Botões do topo (som + idioma) */
+.topo-botoes { display: flex; align-items: center; gap: 10px; }
+.btn-som { min-width: 48px; font-size: 18px; }

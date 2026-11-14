@@ -226,3 +226,113 @@ test("carta sem resposta fica com a última opção ao avançar", () => {
   assert.equal(e.historico.at(-1).evento.escolha, "continuar");
   assert.ok(e.diario.some((x) => x.chave === "log_escolha"));
 });
+
+// ---------- Minigames: o desempenho (0 a 1) escala o efeito da opção ativa ----------
+
+test("minigame: cada carta tem uma opção ativa (com minigame) e uma passiva (sem)", () => {
+  const { eventos } = carregar();
+  for (const tipo of Object.keys(eventos.OPCOES)) {
+    const [ativa, passiva] = eventos.OPCOES[tipo];
+    assert.ok(eventos.minigameDe(tipo, ativa.id), `${tipo}: a primeira opção tem minigame`);
+    assert.equal(eventos.minigameDe(tipo, passiva.id), null, `${tipo}: a última opção é segura`);
+    assert.ok(eventos.faixaDe(tipo, ativa.id));
+    assert.equal(eventos.faixaDe(tipo, passiva.id), null);
+  }
+});
+
+test("minigame: sem nota (ou pulando) o efeito é o do balanceamento original", () => {
+  const { eventos } = carregar();
+  // JSON.parse(JSON.stringify()) porque os objetos vêm de outro "realm" (vm) e o deepEqual estrito estranha o protótipo
+  const plano = (o) => JSON.parse(JSON.stringify(o));
+  assert.deepEqual(plano(eventos.efeitoDe("poeira", "limpar_paineis")), { o2: -8, energia: 3 });
+  assert.deepEqual(plano(eventos.efeitoDe("solar", "abrigo")), { tempestade: 0.3, comida: -4 });
+  assert.deepEqual(plano(eventos.efeitoDe("filtro", "consertar_filtro")), { o2: 0, energia: -2 });
+  assert.deepEqual(plano(eventos.efeitoDe("praga", "arrancar_plantas")), { comida: -6 });
+  assert.deepEqual(plano(eventos.efeitoDe("poeira", "esperar_base")), { consumoO2: -8 }, "passiva não muda");
+});
+
+test("minigame: nota 0 dá o pior efeito, nota 1 o melhor, e a nota é limitada a 0..1", () => {
+  const { eventos } = carregar();
+  assert.equal(eventos.efeitoDe("poeira", "limpar_paineis", 0).energia, 1);
+  assert.equal(eventos.efeitoDe("poeira", "limpar_paineis", 1).energia, 4);
+  assert.equal(eventos.efeitoDe("poeira", "limpar_paineis", 7).energia, 4, "acima de 1 vira 1");
+  assert.equal(eventos.efeitoDe("poeira", "limpar_paineis", -3).energia, 1, "abaixo de 0 vira 0");
+  assert.equal(eventos.efeitoDe("poeira", "limpar_paineis", NaN).energia, 3, "lixo vira o padrão");
+  assert.equal(eventos.efeitoDe("solar", "abrigo", 1).tempestade, 0.1);
+  assert.equal(eventos.efeitoDe("solar", "abrigo", 0).tempestade, 0.5);
+  assert.equal(eventos.efeitoDe("filtro", "consertar_filtro", 1).o2, 4);
+  assert.equal(eventos.efeitoDe("praga", "arrancar_plantas", 0).comida, -10);
+});
+
+test("minigame: nota melhor nunca dá efeito pior (monotônico)", () => {
+  const { eventos } = carregar();
+  for (const tipo of Object.keys(eventos.OPCOES)) {
+    const ativa = eventos.OPCOES[tipo][0];
+    let anterior = eventos.efeitoDe(tipo, ativa.id, 0);
+    for (let p = 0.1; p <= 1.0001; p += 0.1) {
+      const atual = eventos.efeitoDe(tipo, ativa.id, p);
+      for (const k of Object.keys(atual)) {
+        // tempestade: menor é melhor; os outros: maior é melhor
+        if (k === "tempestade") assert.ok(atual[k] <= anterior[k] + 1e-9, `${tipo}.${k} piorou`);
+        else assert.ok(atual[k] >= anterior[k], `${tipo}.${k} piorou`);
+      }
+      anterior = atual;
+    }
+  }
+});
+
+test("minigame: a nota entra na energia, no ar e fica no histórico e no diário", () => {
+  const { jogo } = carregar();
+  const montar = (nota) => {
+    const e = jogo.criarJogo();
+    for (let i = 0; i < 6; i++) jogo.avancar(e, CALMO);
+    jogo.avancar(e, fixo(0.3));                       // poeira na base
+    jogo.escolher(e, "limpar_paineis", nota);
+    return e;
+  };
+  const ruim = montar(0), bom = montar(1);
+  assert.equal(jogo.energiaDisponivel(bom) - jogo.energiaDisponivel(ruim), 3, "limpar bem rende +3 de energia");
+  assert.equal(bom.evento.desempenho, 1);
+
+  jogo.avancar(bom, CALMO);
+  assert.equal(bom.historico.at(-1).evento.desempenho, 1);
+  const log = bom.diario.find((x) => x.chave === "log_minigame");
+  assert.equal(log.p.pct, 100);
+
+  // trocar para a opção passiva apaga a nota (não herda o bônus)
+  const e = montar(1);
+  jogo.escolher(e, "esperar_base");
+  assert.equal(e.evento.desempenho, null);
+  assert.equal(e.diario.some((x) => x.chave === "log_minigame"), false);
+});
+
+test("minigame: abrigo bem jogado corta mais radiação que abrigo mal jogado", () => {
+  const { jogo } = carregar();
+  const dose = (nota) => {
+    const e = jogo.criarJogo();
+    jogo.avancar(e, fixo(0.1));
+    e.alocacao = { o2: 3, food: 3, shield: 0, comms: 2 };
+    jogo.escolher(e, "abrigo", nota);
+    const r0 = e.rad;
+    jogo.avancar(e, CALMO);
+    return e.rad - r0;
+  };
+  assert.ok(dose(1) < dose(0.5));
+  assert.ok(dose(0.5) < dose(0));
+});
+
+test("minigame: o debriefing elogia quem jogou bem e dá dica a quem foi mal", () => {
+  const { jogo } = carregar();
+  const jogar = (nota) => {
+    const e = jogo.criarJogo();
+    jogo.avancar(e, fixo(0.1));                       // tempestade solar avisada
+    jogo.escolher(e, "abrigo", nota);
+    jogo.avancar(e, CALMO);
+    return jogo.avaliar(e);
+  };
+  assert.ok(jogar(0.9).certo.some((x) => x.chave === "fim_certo_minigame"));
+  assert.ok(jogar(0.1).dica.some((x) => x.chave === "fim_dica_minigame"));
+  const pulou = jogar(undefined);
+  assert.equal(pulou.certo.some((x) => x.chave === "fim_certo_minigame"), false, "pular não conta como jogar");
+  assert.equal(pulou.dica.some((x) => x.chave === "fim_dica_minigame"), false);
+});
