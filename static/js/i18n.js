@@ -75,7 +75,7 @@ const TEXTOS = {
 
     rodape_aviso: "<b>Dados arquivados, não ao vivo.</b> Os números vêm de medições já publicadas pela NASA.",
     fonte_rad: 'Radiação na viagem (~1,8 mSv/dia) e em Marte (~0,64 mSv/sol): detector <abbr title="Radiation Assessment Detector">RAD</abbr> do rover Curiosity (Zeitlin et al., 2013; Hassler et al., 2014).',
-    fonte_donki: 'Tempestades solares: arquivo <a href="https://kauai.ccmc.gsfc.nasa.gov/DONKI/" target="_blank" rel="noopener">NASA DONKI</a>.',
+    fonte_donki: 'Tempestades solares: arquivo <a href="https://ccmc.gsfc.nasa.gov/DONKI/" target="_blank" rel="noopener">NASA DONKI</a>.',
     fonte_sol: 'Duração do sol (24h39min): <a href="https://mars.nasa.gov/" target="_blank" rel="noopener">NASA Mars Exploration</a>.',
     credito: "NASA Space Apps Challenge 2026 · Ilustrações feitas pela equipe.",
   },
@@ -142,7 +142,7 @@ const TEXTOS = {
 
     rodape_aviso: "<b>Archived data, not live.</b> The numbers come from measurements NASA has already published.",
     fonte_rad: 'Radiation during the trip (~1.8 mSv/day) and on Mars (~0.64 mSv/sol): Curiosity rover\'s <abbr title="Radiation Assessment Detector">RAD</abbr> detector (Zeitlin et al., 2013; Hassler et al., 2014).',
-    fonte_donki: 'Solar storms: <a href="https://kauai.ccmc.gsfc.nasa.gov/DONKI/" target="_blank" rel="noopener">NASA DONKI</a> archive.',
+    fonte_donki: 'Solar storms: <a href="https://ccmc.gsfc.nasa.gov/DONKI/" target="_blank" rel="noopener">NASA DONKI</a> archive.',
     fonte_sol: 'Length of a sol (24h39min): <a href="https://mars.nasa.gov/" target="_blank" rel="noopener">NASA Mars Exploration</a>.',
     credito: "NASA Space Apps Challenge 2026 · Illustrations made by the team.",
   },
