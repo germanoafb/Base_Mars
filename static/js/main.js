@@ -1,9 +1,9 @@
 // Ponto de entrada do jogo no navegador.
 // Cuida só da TELA: monta o HTML de cada tela, lê os cliques do jogador
 // e chama as regras em static/js/game/ (window.ARES.jogo).
-// As regras do jogo NÃO ficam aqui.
+// As regras do jogo NÃO ficam aqui. O mapa em pixel art fica em mapa.js.
 //
-// Ordem dos scripts no index.html: i18n.js → dados → game/*.js → main.js
+// Ordem dos scripts no index.html: i18n.js → dados → game/*.js → mapa.js → main.js
 
 (function () {
   "use strict";
@@ -11,17 +11,27 @@
   const { t, mudarIdioma, idiomaAtual, idiomaInicial } = window.I18N;
   const J = window.ARES.jogo;
   const C = J.CONFIG;
+  const MAPA = window.MAPA;
   const app = document.getElementById("app");
 
-  // O que está na tela agora
-  const ui = { tela: "lancamento", jogo: null };
+  // O que está na tela agora. estacao = estação do mapa onde a Lia está.
+  const ui = { tela: "lancamento", jogo: null, estacao: null };
 
-  // Tripulação (rosto: cor da pele e do cabelo)
+  // Tripulação: cor da pele, do cabelo e do traje (o mesmo do mapa)
   const TRIPULACAO = [
-    { nome: "Lia", papel: "papel_comandante", pele: "#f1c27d", cabelo: "#3b2a20" },
-    { nome: "Davi", papel: "papel_engenheiro", pele: "#8d5524", cabelo: "#1b1b1b" },
-    { nome: "Yara", papel: "papel_botanica", pele: "#e0ac69", cabelo: "#a0522d" },
+    { nome: "Lia", papel: "papel_comandante", pele: "#f1c27d", cabelo: "#3b2a20", traje: "#ff8a4c" },
+    { nome: "Davi", papel: "papel_engenheiro", pele: "#8d5524", cabelo: "#1b1b1b", traje: "#6fd3ff" },
+    { nome: "Yara", papel: "papel_botanica", pele: "#e0ac69", cabelo: "#a0522d", traje: "#6ee08a" },
   ];
+
+  // Estações do mapa: ícone e chaves de texto
+  const ESTACAO = {
+    food: { icone: "i-food", cls: "aloc--comida" },
+    o2: { icone: "i-o2", cls: "aloc--o2" },
+    shield: { icone: "i-shield", cls: "aloc--escudo" },
+    comms: { icone: "i-comms", cls: "aloc--comms" },
+    home: { icone: "i-home", cls: "" },
+  };
 
   // ---------- Ajudantes ----------
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -68,31 +78,49 @@
     return "";
   }
 
+  // ---------- Rosto em pixel art (16×16 quadradinhos) ----------
+  // humor: "feliz" | "preocupado" | "assustado"
+  function rosto(pessoa, humor = "feliz") {
+    const px = [];
+    const r = (x, y, w, h, c) => px.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`);
+    // Capacete (contorno + vidro branco)
+    const meio = [3, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 6, 6, 5, 3];
+    meio.forEach((w, y) => { r(8 - w - 1, y, (w + 1) * 2, 1, "#5a3040"); });
+    meio.forEach((w, y) => { if (y > 0 && y < 14) r(8 - w, y, w * 2, 1, "#ffe9d6"); });
+    // Rosto e cabelo
+    [3, 4, 5, 5, 5, 5, 4, 4, 3].forEach((w, i) => r(8 - w, 4 + i, w * 2, 1, pessoa.pele));
+    r(3, 3, 10, 2, pessoa.cabelo); r(3, 5, 2, 2, pessoa.cabelo); r(11, 5, 2, 2, pessoa.cabelo);
+    // Olhos
+    r(5, 7, 2, 2, "#1a0f14"); r(9, 7, 2, 2, "#1a0f14");
+    if (humor === "feliz") {
+      r(4, 9, 1, 1, "#ff8fa3"); r(11, 9, 1, 1, "#ff8fa3");
+      r(5, 10, 1, 1, "#1a0f14"); r(10, 10, 1, 1, "#1a0f14"); r(6, 11, 4, 1, "#1a0f14");   // sorriso
+    } else if (humor === "preocupado") {
+      r(5, 6, 2, 1, "#1a0f14"); r(9, 6, 2, 1, "#1a0f14");                                  // sobrancelhas
+      r(6, 11, 4, 1, "#1a0f14");                                                           // boca reta
+    } else {
+      r(4, 5, 2, 1, "#1a0f14"); r(10, 5, 2, 1, "#1a0f14");                                 // sobrancelhas para cima
+      r(7, 10, 2, 2, "#1a0f14");                                                           // boca de "o"
+      r(13, 6, 1, 2, "#6fd3ff");                                                           // gota de suor
+    }
+    return `<svg class="rosto-svg" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${px.join("")}</svg>`;
+  }
+
   // ---------- TELA 1: lançamento ----------
   function telaLancamento() {
     const astronautas = TRIPULACAO.map((a) => `
-      <li class="astronauta">
-        <svg class="astronauta-rosto" style="--pele:${a.pele};--cabelo:${a.cabelo}" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-astro"/></svg>
+      <li class="astronauta" style="--traje:${a.traje}">
+        ${rosto(a)}
         <span class="astronauta-nome">${a.nome}</span>
         <span class="astronauta-papel">${t(a.papel)}</span>
       </li>`).join("");
 
     return `
     <section class="tela tela--lancamento" aria-labelledby="t-tela">
-      <div class="cena-lancamento" aria-hidden="true">
-        <svg viewBox="0 0 320 120" class="cena-svg">
-          <circle cx="40" cy="120" r="70" fill="var(--terra)"/>
-          <path d="M5 95q20-15 40-5t30-10" stroke="var(--comida)" stroke-width="10" fill="none" stroke-linecap="round" opacity=".8"/>
-          <circle cx="280" cy="40" r="26" fill="var(--marte)"/>
-          <circle cx="272" cy="34" r="5" fill="var(--marte-escuro)"/>
-          <circle cx="290" cy="50" r="6" fill="var(--marte-escuro)"/>
-          <path d="M80 70Q170 10 248 40" stroke="var(--texto-suave)" stroke-width="2.5" stroke-dasharray="2 9" stroke-linecap="round" fill="none"/>
-        </svg>
-        <svg class="nave-lancamento" viewBox="0 0 48 24"><use href="#i-ship"/></svg>
-      </div>
+      <canvas class="mapa-canvas mapa-canvas--enfeite" id="mapa" role="img" aria-label="${esc(t("mapa_aria_lancamento"))}"></canvas>
       <h1 id="t-tela" tabindex="-1">${t("lanc_titulo")}</h1>
       <p class="lead">${t("lanc_lead")}</p>
-      <p class="explica">${t("lanc_regras", { dias: C.viagem.turnos * C.viagem.diasPorTurno, sois: C.base.sois, energia: C.energiaPorTurno })}</p>
+      <p class="explica">${t("lanc_regras", { dias: C.viagem.turnos * C.viagem.diasPorTurno, sois: C.base.sois, energia: C.energiaPorTurno, meta: C.metaCiencia })}</p>
       <h2 class="subtitulo">${t("tripulacao")}</h2>
       <ul class="tripulacao">${astronautas}</ul>
       <button class="btn btn-principal" type="button" data-a="next">${ico("i-ship")} ${t("lancar")}</button>
@@ -125,6 +153,11 @@
           ${ico("i-energy", "ico ico--energia")}
           <span class="energia-rotulo">${t("energia_livre")}</span>
           <span class="energia-valor"><b>${J.energiaLivre(e)}</b> ${t("de")} ${J.energiaDisponivel(e)}</span>
+          <span class="energia-detalhe">
+            ${ico("i-sol")} ${t("energia_paineis", { n: J.energiaSolar(e) })}
+            · ${ico("i-battery")} ${t("energia_bateria", { n: e.bateria, max: C.bateriaMax })}
+          </span>
+          <span class="energia-dica">${t("energia_sobra", { max: C.bateriaMax })}</span>
         </div>
         <div class="barras">
           ${barra("barra--o2", "i-o2", t("oxigenio"), `${e.o2}%`, chip(prev.o2 - e.o2, true, `${prev.o2}%`), e.o2, prev.o2, `${e.o2}%`,
@@ -137,39 +170,71 @@
   }
 
   // ---------- Divisão de energia (− e +) ----------
-  function linhaAlocacao(e, k, cls, icone, nomeChave, efeitoHtml) {
+  function controles(e, k) {
     const valor = e.alocacao[k];
     const livre = J.energiaLivre(e);
-    const nome = t(nomeChave);
     let pontos = "";
     for (let i = 0; i < C.maxPorSistema; i++) pontos += `<i${i < valor ? ' class="on"' : ""}></i>`;
     return `
-      <div class="aloc ${cls}">
-        ${ico(icone)}
-        <span class="aloc-nome">${nome}</span>
         <button class="btn-passo" type="button" data-a="adj" data-k="${k}" data-d="-1" aria-label="${esc(t("menos_" + k))}"${valor <= 0 ? " disabled" : ""}>−</button>
         <span class="aloc-pontos" role="img" aria-label="${esc(t("pontos_aria", { n: valor, max: C.maxPorSistema }))}">${pontos}</span>
-        <button class="btn-passo" type="button" data-a="adj" data-k="${k}" data-d="1" aria-label="${esc(t("mais_" + k))}"${valor >= C.maxPorSistema || livre <= 0 ? " disabled" : ""}>+</button>
-        ${efeitoHtml}
+        <button class="btn-passo" type="button" data-a="adj" data-k="${k}" data-d="1" aria-label="${esc(t("mais_" + k))}"${valor >= C.maxPorSistema || livre <= 0 ? " disabled" : ""}>+</button>`;
+  }
+
+  function efeitoHtml(e, k) {
+    const ef = J.efeitoDosSistemas(e);
+    if (k === "o2") return chipEfeito(ef.o2);
+    if (k === "food") return chipEfeito(ef.food);
+    if (k === "shield") return `<span class="previsao previsao--${ef.shield > 0 ? "bom" : "ruim"}">${ef.shield}%</span>`;
+    return ef.comms > 0
+      ? `<span class="previsao previsao--bom">+${ef.comms} ${ico("i-sci")}</span>`
+      : `<span class="previsao previsao--ruim">—</span>`;
+  }
+
+  function linhaAlocacao(e, k, nomeChave) {
+    const est = ESTACAO[k];
+    const aqui = ui.estacao === k;
+    return `
+      <div class="aloc ${est.cls}${aqui ? " aloc--aqui" : ""}">
+        ${ico(est.icone)}
+        <span class="aloc-nome">${t(nomeChave)}</span>
+        ${controles(e, k)}
+        ${efeitoHtml(e, k)}
       </div>`;
   }
 
   function divisaoEnergia(e) {
-    const ef = J.efeitoDosSistemas(e);
-    const escudo = `<span class="previsao previsao--${ef.shield > 0 ? "bom" : "ruim"}">${ef.shield}%</span>`;
-    const radio = ef.comms >= 2
-      ? `<span class="previsao previsao--bom">${t("efeito_radio_aviso")}</span>`
-      : ef.comms === 1
-        ? `<span class="previsao previsao--neutra">${t("efeito_radio_msg")}</span>`
-        : `<span class="previsao previsao--ruim">—</span>`;
     return `
       <div class="energia-divisao">
         <h2 class="subtitulo">${t("para_onde")}</h2>
-        ${linhaAlocacao(e, "o2", "aloc--o2", "i-o2", "oxigenio", chipEfeito(ef.o2))}
-        ${linhaAlocacao(e, "food", "aloc--comida", "i-food", "comida", chipEfeito(ef.food))}
-        ${linhaAlocacao(e, "shield", "aloc--escudo", "i-shield", "escudo", escudo)}
-        ${linhaAlocacao(e, "comms", "aloc--comms", "i-comms", "radio", radio)}
+        ${linhaAlocacao(e, "o2", "oxigenio")}
+        ${linhaAlocacao(e, "food", "comida")}
+        ${linhaAlocacao(e, "shield", "escudo")}
+        ${linhaAlocacao(e, "comms", "radio")}
         <p class="explica">${t("explica_escudo_radio")}</p>
+      </div>`;
+  }
+
+  // ---------- Painel da estação onde a Lia está (embaixo do mapa) ----------
+  function painelEstacao(e) {
+    const k = ui.estacao;
+    if (!k) return `<div class="estacao estacao--vazia" aria-live="polite">${ico("i-home")} <span>${t("mapa_dica")}</span></div>`;
+    const est = ESTACAO[k];
+    const nome = t(`est_${k}_nome_${e.fase}`) !== `est_${k}_nome_${e.fase}` ? t(`est_${k}_nome_${e.fase}`) : t(`est_${k}_nome`);
+    if (k === "home") {
+      const esperando = J.precisaEscolher(e);
+      return `
+      <div class="estacao" aria-live="polite">
+        <h2 class="estacao-nome">${ico(est.icone)} ${nome}</h2>
+        <p>${t("est_home_desc")}</p>
+        <button class="btn btn-principal" type="button" data-a="next"${esperando ? " disabled" : ""}>${t("dormir")}</button>
+      </div>`;
+    }
+    return `
+      <div class="estacao ${est.cls}" aria-live="polite">
+        <h2 class="estacao-nome">${ico(est.icone)} ${nome}</h2>
+        <p>${t(`est_${k}_desc`)}</p>
+        <div class="estacao-controles">${controles(e, k)} ${efeitoHtml(e, k)}</div>
       </div>`;
   }
 
@@ -179,14 +244,14 @@
   // Chips com o efeito de cada opção: ícone + número (nunca só cor)
   function chipsEfeito(ef) {
     const itens = [];
-    const add = (icone, nomeChave, n, texto, bom) =>
+    const add = (icone, nomeChave, texto, bom) =>
       itens.push(`<span class="efeito efeito--${bom ? "bom" : "ruim"}">${ico(icone)}<span class="sr-only">${t(nomeChave)}</span> ${texto}</span>`);
     const sinal = (n) => (n > 0 ? "+" : "−") + Math.abs(n);
-    if (ef.o2) add("i-o2", "oxigenio", ef.o2, sinal(ef.o2), ef.o2 > 0);
-    if (ef.consumoO2) add("i-o2", "oxigenio", -ef.consumoO2, sinal(-ef.consumoO2), ef.consumoO2 < 0);
-    if (ef.comida) add("i-food", "comida", ef.comida, sinal(ef.comida), ef.comida > 0);
-    if (ef.energia) add("i-energy", "energia", ef.energia, sinal(ef.energia), ef.energia > 0);
-    if (ef.tempestade !== undefined) add("i-rad", "radiacao", 0, `−${Math.round((1 - ef.tempestade) * 100)}%`, true);
+    if (ef.o2) add("i-o2", "oxigenio", sinal(ef.o2), ef.o2 > 0);
+    if (ef.consumoO2) add("i-o2", "oxigenio", sinal(-ef.consumoO2), ef.consumoO2 < 0);
+    if (ef.comida) add("i-food", "comida", sinal(ef.comida), ef.comida > 0);
+    if (ef.energia) add("i-energy", "energia", sinal(ef.energia), ef.energia > 0);
+    if (ef.tempestade !== undefined) add("i-rad", "radiacao", `−${Math.round((1 - ef.tempestade) * 100)}%`, true);
     return itens.length ? itens.join("") : `<span class="efeito efeito--neutro">${t("efeito_nenhum")}</span>`;
   }
 
@@ -216,47 +281,21 @@
       </div>`;
   }
 
-  // ---------- Tripulação viva: rostos com expressão + uma fala ----------
-  // humor: "feliz" | "preocupado" | "assustado"
-  function rosto(pessoa, humor) {
-    const boca = humor === "feliz"
-      ? `<path d="M26 40q6 5 12 0" stroke="#1d1b38" stroke-width="2.6" stroke-linecap="round" fill="none"/>`
-      : humor === "preocupado"
-        ? `<path d="M27 42q5-3 10 0" stroke="#1d1b38" stroke-width="2.6" stroke-linecap="round" fill="none"/>`
-        : `<ellipse cx="32" cy="42" rx="3.2" ry="4" fill="#1d1b38"/>`;
-    const sobrancelhas = humor === "feliz" ? ""
-      : humor === "preocupado"
-        ? `<path d="M21 27l7 2M43 27l-7 2" stroke="#1d1b38" stroke-width="2.2" stroke-linecap="round"/>`
-        : `<path d="M21 26l7-2M43 26l-7-2" stroke="#1d1b38" stroke-width="2.2" stroke-linecap="round"/>`;
-    const suor = humor === "assustado" ? `<path d="M47 30q3 5 0 7q-3-2 0-7z" fill="#6fd3ff"/>` : "";
-    return `
-      <svg class="rosto-svg" viewBox="0 0 64 64" aria-hidden="true">
-        <circle cx="32" cy="32" r="30" fill="#f4f1ff"/>
-        <circle cx="32" cy="32" r="30" fill="none" stroke="#c9c4ea" stroke-width="3"/>
-        <rect x="12" y="15" width="40" height="34" rx="17" fill="${pessoa.pele}"/>
-        <path d="M14 26c2-9 10-13 18-13s16 4 18 13c-6-4-12-5-18-5s-12 1-18 5z" fill="${pessoa.cabelo}"/>
-        ${sobrancelhas}
-        <circle cx="25" cy="33" r="2.8" fill="#1d1b38"/>
-        <circle cx="39" cy="33" r="2.8" fill="#1d1b38"/>
-        ${humor === "feliz" ? `<circle cx="20" cy="39" r="3" fill="#ff8fa3" opacity=".55"/><circle cx="44" cy="39" r="3" fill="#ff8fa3" opacity=".55"/>` : ""}
-        ${boca}${suor}
-      </svg>`;
-  }
-
-  // Quem está como, e quem fala o quê, a partir da previsão do turno
+  // ---------- Tripulação viva: humor de cada um + uma fala ----------
   function climaDaTripulacao(e) {
     const prev = J.previsao(e);
     const ev = e.evento && e.evento.visivel ? e.evento : null;
     const humorPor = (v) => (v < 25 ? "assustado" : v < 45 ? "preocupado" : "feliz");
     const tempestadePerigosa = ev && ev.tipo === "solar" && e.alocacao.shield < 3 && ev.escolha !== "abrigo";
     const humores = [
-      humorPor(prev.o2),                                                      // Lia cuida do ar
-      tempestadePerigosa ? "assustado" : ev || e.rad > 400 ? "preocupado" : "feliz",  // Davi: sistemas e radiação
-      humorPor(prev.comida),                                                  // Yara cuida da estufa
+      humorPor(prev.o2),                                                               // Lia cuida do ar e da água
+      tempestadePerigosa ? "assustado" : ev || e.rad > 400 ? "preocupado" : "feliz",   // Davi: sistemas e radiação
+      humorPor(prev.comida),                                                           // Yara cuida da estufa
     ];
 
     // Fala: a situação mais urgente primeiro. [quem fala (0 Lia, 1 Davi, 2 Yara), chave]
     let fala;
+    const giro = (e.turno + (e.fase === "base" ? 1 : 0)) % 3;
     if (ev && !ev.escolha) fala = ev.tipo === "solar" ? [1, "fala_tempestade"] : ev.tipo === "poeira" ? [1, "fala_poeira"] : ev.tipo === "praga" ? [2, "fala_praga"] : [0, "fala_escolha"];
     else if (prev.o2 < 25) fala = [0, "fala_ar_critico"];
     else if (prev.comida < 25) fala = [2, "fala_comida_critica"];
@@ -265,14 +304,14 @@
     else if (prev.o2 < 45) fala = [0, "fala_ar_baixo"];
     else if (prev.comida < 45) fala = [2, "fala_comida_baixa"];
     else if (e.fase === "base" && e.turno === 1) fala = [0, "fala_chegada"];
-    else fala = [(e.turno + (e.fase === "base" ? 1 : 0)) % 3, "fala_tudo_bem_" + ((e.turno + (e.fase === "base" ? 1 : 0)) % 3)];
+    else fala = [giro, "fala_tudo_bem_" + giro];
     return { humores, fala };
   }
 
   function tripulacaoViva(e) {
     const { humores, fala } = climaDaTripulacao(e);
     const rostos = TRIPULACAO.map((p, i) => `
-        <li class="rosto rosto--${humores[i]}${fala[0] === i ? " rosto--falando" : ""}">
+        <li class="rosto rosto--${humores[i]}${fala[0] === i ? " rosto--falando" : ""}" style="--traje:${p.traje}">
           ${rosto(p, humores[i])}
           <span class="rosto-nome">${p.nome}</span>
           <span class="sr-only">${t("humor_" + humores[i], { nome: p.nome })}</span>
@@ -282,96 +321,6 @@
         <ul class="rostos">${rostos}</ul>
         <p class="fala fala--${fala[0]}" role="status"><b>${TRIPULACAO[fala[0]].nome}:</b> ${t(fala[1])}</p>
       </div>`;
-  }
-
-  // ---------- Cenas que reagem ao estado do jogo ----------
-  // Estado visual: escudo (0 a 1), tempestade, poeira, alarme de ar, tamanho das plantas, rádio
-  function estadoDaCena(e) {
-    const prev = J.previsao(e);
-    const ev = e.evento && e.evento.visivel ? e.evento : null;
-    return {
-      escudo: e.alocacao.shield / C.maxPorSistema,
-      tempestade: Boolean(ev && ev.tipo === "solar"),
-      poeira: Boolean(ev && ev.tipo === "poeira"),
-      alarme: e.o2 < 30 || prev.o2 < 30,
-      planta: Math.max(0.15, e.comida / 100),
-      radio: e.alocacao.comms,
-    };
-  }
-
-  function ondasRadio(x, y, n) {
-    let ondas = "";
-    for (let i = 1; i <= Math.min(n, 2); i++) {
-      ondas += `<path d="M${x + 6 * i} ${y - 6 * i}a${8 * i} ${8 * i} 0 0 1 0 ${12 * i}" stroke="var(--comms)" stroke-width="2.5" fill="none" stroke-linecap="round" style="animation-delay:${i * 0.3}s"/>`;
-    }
-    return n > 0 ? `<g class="cena-ondas">${ondas}</g>` : "";
-  }
-
-  function plantas(x, y, escala, n) {
-    let g = "";
-    for (let i = 0; i < n; i++) {
-      const h = 6 + 16 * escala;
-      const px = x + i * 9;
-      g += `<path d="M${px} ${y}v-${h}" stroke="var(--comida)" stroke-width="2.5" stroke-linecap="round"/>` +
-        `<ellipse cx="${px - 3}" cy="${y - h * 0.6}" rx="${2 + 2 * escala}" ry="${1.5 + 1.5 * escala}" fill="var(--comida)"/>` +
-        `<ellipse cx="${px + 3}" cy="${y - h}" rx="${2 + 2 * escala}" ry="${1.5 + 1.5 * escala}" fill="var(--comida)"/>`;
-    }
-    return g;
-  }
-
-  function cenaViagem(e) {
-    const c = estadoDaCena(e);
-    const p = (e.turno - 1) / C.viagem.turnos;
-    const rTerra = 34 - 22 * p;
-    const rMarte = 10 + 26 * p;
-    return `
-      <svg class="cena-jogo" viewBox="0 0 360 190" role="img" aria-label="${esc(t("cena_viagem_aria"))}">
-        <g fill="#fff" opacity=".7"><circle cx="70" cy="30" r="1.2"/><circle cx="150" cy="18" r="1"/><circle cx="250" cy="40" r="1.4"/><circle cx="300" cy="150" r="1"/><circle cx="110" cy="160" r="1.3"/><circle cx="210" cy="170" r="1"/></g>
-        <circle cx="34" cy="95" r="${rTerra}" fill="var(--terra)"/>
-        <path d="M${34 - rTerra * 0.6} ${95 - rTerra * 0.2}q${rTerra * 0.4} -${rTerra * 0.3} ${rTerra * 0.8} 0" stroke="var(--comida)" stroke-width="${2 + rTerra / 8}" fill="none" stroke-linecap="round"/>
-        <circle cx="326" cy="95" r="${rMarte}" fill="var(--marte)"/>
-        <circle cx="${326 - rMarte * 0.3}" cy="${95 - rMarte * 0.25}" r="${rMarte * 0.22}" fill="var(--marte-escuro)"/>
-        ${c.tempestade ? `<g class="cena-raios" stroke="var(--energia)" stroke-width="2" stroke-linecap="round" opacity=".8"><path d="M0 40l70 20"/><path d="M0 120l80 -10"/><path d="M0 170l60 -25"/></g><rect class="cena-tempestade" width="360" height="190" fill="var(--radiacao)"/>` : ""}
-        <g class="cena-nave">
-          <ellipse class="cena-escudo" cx="180" cy="95" rx="78" ry="50" fill="var(--escudo)" stroke="var(--escudo)" stroke-width="3" style="opacity:${(c.escudo * 0.9).toFixed(2)}"/>
-          <svg x="120" y="65" width="120" height="60" viewBox="0 0 48 24"><use href="#i-ship"/></svg>
-          <rect x="160" y="118" width="40" height="14" rx="7" fill="#2a2f6b" stroke="#c9c4ea" stroke-width="1.5"/>
-          ${plantas(167, 129, c.planta * 0.45, 3)}
-          ${c.alarme ? `<circle class="cena-alarme" cx="172" cy="70" r="6" fill="#ff4d4d"/>` : ""}
-          ${ondasRadio(240, 95, c.radio)}
-        </g>
-      </svg>`;
-  }
-
-  function cenaBase(e) {
-    const c = estadoDaCena(e);
-    return `
-      <svg class="cena-jogo cena-jogo--base" viewBox="0 0 360 190" role="img" aria-label="${esc(t("cena_base_aria"))}">
-        <rect width="360" height="190" fill="#e9a27a"/>
-        <circle cx="300" cy="40" r="12" fill="#fff4d6" opacity=".9"/>
-        ${c.tempestade ? `<rect class="cena-tempestade" width="360" height="190" fill="var(--radiacao)"/>` : ""}
-        <path d="M0 130q50-25 110-8t110-12 140 6v74H0z" fill="var(--marte-escuro)"/>
-        <path d="M0 150q70-14 160 0t200-6v46H0z" fill="var(--marte)"/>
-        <ellipse class="cena-escudo" cx="180" cy="152" rx="82" ry="58" fill="var(--escudo)" stroke="var(--escudo)" stroke-width="3" style="opacity:${(c.escudo * 0.9).toFixed(2)}"/>
-        <path d="M60 165a30 30 0 0 1 60 0z" fill="rgba(110,224,138,.25)" stroke="#c9f5d4" stroke-width="2"/>
-        ${plantas(73, 163, c.planta, 4)}
-        <!-- Caixa d'água: o nível acompanha a barra de ar e água -->
-        <rect x="122" y="134" width="14" height="32" rx="4" fill="#2a2f6b" stroke="#c9c4ea" stroke-width="1.5"/>
-        <rect x="124" y="${136 + 28 * (1 - e.o2 / 100)}" width="10" height="${28 * e.o2 / 100}" rx="2" fill="var(--o2)"/>
-        <rect x="140" y="128" width="80" height="38" rx="19" fill="#f4f1ff"/>
-        <circle cx="162" cy="146" r="6" fill="var(--o2)"/><circle cx="198" cy="146" r="6" fill="var(--o2)"/>
-        ${c.alarme ? `<circle class="cena-alarme" cx="180" cy="124" r="6" fill="#ff4d4d"/>` : ""}
-        <g transform="translate(250 150)">
-          <rect x="0" y="0" width="34" height="14" rx="2" fill="var(--escudo)" transform="skewX(-15)"/>
-          <rect x="40" y="0" width="34" height="14" rx="2" fill="var(--escudo)" transform="skewX(-15)"/>
-          ${c.poeira ? `<rect x="-4" y="0" width="80" height="14" fill="#a8612f" opacity=".75" transform="skewX(-15)"/>` : ""}
-          <path d="M14 14v8M54 14v8" stroke="#c9c4ea" stroke-width="3"/>
-        </g>
-        <path d="M232 166V128M224 122h16" stroke="#c9c4ea" stroke-width="3" stroke-linecap="round"/>
-        <circle cx="232" cy="120" r="5" fill="none" stroke="#f4f1ff" stroke-width="2.5"/>
-        ${ondasRadio(236, 120, c.radio)}
-        ${c.poeira ? `<g class="cena-poeira"><rect x="-60" width="480" height="190" fill="#b5652e" opacity=".35"/><path d="M-40 60q60-20 120 0t120 0 120 0 120 0" stroke="#f3c6a0" stroke-width="6" fill="none" opacity=".5"/><path d="M-60 100q60-20 120 0t120 0 120 0 120 0" stroke="#f3c6a0" stroke-width="4" fill="none" opacity=".4"/></g>` : ""}
-      </svg>`;
   }
 
   // Últimas entradas do diário (as do turno anterior)
@@ -394,44 +343,33 @@
       <button class="btn btn-principal" type="button" data-a="next"${esperando ? ' disabled aria-describedby="dica-escolha"' : ""}>${t(chave)}</button>`;
   }
 
-  function telaViagem(e, quieto) {
+  function telaJogo(e, quieto) {
+    const naViagem = e.fase === "viagem";
     const total = C.viagem.turnos * C.viagem.diasPorTurno;
     const progresso = Math.round(((e.turno - 1) / C.viagem.turnos) * 100);
+    const titulo = naViagem
+      ? t("viagem_titulo", { n: (e.turno - 1) * C.viagem.diasPorTurno + 1, total })
+      : t("sol_titulo", { n: e.turno, total: C.base.sois });
     return `
-    <section class="tela tela--viagem${quieto ? " sem-animacao" : ""}" aria-labelledby="t-tela">
-      <div class="cena mapa" style="--progresso:${progresso}%">
-        <h1 id="t-tela" class="mapa-titulo" tabindex="-1">${t("viagem_titulo", { n: (e.turno - 1) * C.viagem.diasPorTurno + 1, total })}</h1>
-        ${cenaViagem(e)}
-        <div class="mapa-trilha" aria-hidden="true">
-          <span class="mapa-ponto mapa-ponto--terra"></span>
-          <div class="mapa-linha"><div class="mapa-feito"></div><svg class="mapa-nave" viewBox="0 0 48 24"><use href="#i-ship"/></svg></div>
-          <span class="mapa-ponto mapa-ponto--marte"></span>
-        </div>
-        <p class="mapa-legenda"><span>${t("terra")}</span><span>${t("caminho", { n: progresso })}</span><span>${t("marte")}</span></p>
-        ${tripulacaoViva(e)}
-        ${e.turno === 1 ? `<p class="aviso aviso--rad">${ico("i-rad")} <span>${t("aviso_rad")}</span></p>` : ""}
-      </div>
-      ${cartaEvento(e)}
-      ${painel(e)}
-      ${divisaoEnergia(e)}
-      ${diarioUltimo(e)}
-      ${botoesJogo(e)}
-    </section>`;
-  }
-
-  function telaBase(e, quieto) {
-    return `
-    <section class="tela tela--base${quieto ? " sem-animacao" : ""}" aria-labelledby="t-tela">
+    <section class="tela tela--jogo tela--${e.fase}${quieto ? " sem-animacao" : ""}" aria-labelledby="t-tela">
       <div class="cena">
-        <div class="sol-cabecalho">
-          ${ico("i-sol", "ico ico--sol")}
-          <div>
-            <h1 id="t-tela" class="sol-titulo" tabindex="-1">${t("sol_titulo", { n: e.turno, total: C.base.sois })}</h1>
-            <p class="explica">${t("explica_sol")}</p>
-          </div>
+        <div class="cena-topo">
+          <h1 id="t-tela" class="cena-titulo" tabindex="-1">${titulo}</h1>
+          <span class="selo-ciencia" title="${esc(t("ciencia"))}">${ico("i-sci")} <b>${e.ciencia}</b>/${C.metaCiencia}<span class="sr-only"> ${t("ciencia")}</span></span>
         </div>
-        ${cenaBase(e)}
+        ${naViagem ? "" : `<p class="explica">${t("explica_sol")}</p>`}
+        <canvas class="mapa-canvas" id="mapa" role="img" aria-label="${esc(t(naViagem ? "mapa_aria_viagem" : "mapa_aria_base"))}"></canvas>
+        ${naViagem ? `<div class="mapa" style="--progresso:${progresso}%">
+          <div class="mapa-trilha" aria-hidden="true">
+            <span class="mapa-ponto mapa-ponto--terra"></span>
+            <div class="mapa-linha"><div class="mapa-feito"></div></div>
+            <span class="mapa-ponto mapa-ponto--marte"></span>
+          </div>
+          <p class="mapa-legenda"><span>${t("terra")}</span><span>${t("caminho", { n: progresso })}</span><span>${t("marte")}</span></p>
+        </div>` : ""}
+        ${painelEstacao(e)}
         ${tripulacaoViva(e)}
+        ${naViagem && e.turno === 1 ? `<p class="aviso aviso--rad">${ico("i-rad")} <span>${t("aviso_rad")}</span></p>` : ""}
       </div>
       ${cartaEvento(e)}
       ${painel(e)}
@@ -453,7 +391,7 @@
     </section>`;
   }
 
-  // ---------- TELA 5: debriefing ----------
+  // ---------- TELA 5: debriefing (3 finais, nenhum é castigo) ----------
   function telaFim(e) {
     const r = J.avaliar(e);
     const lista = (itens) => itens.map((x) => {
@@ -462,22 +400,23 @@
       return `<li>${t(x.chave, p)}</li>`;
     }).join("");
 
-    const cedo = e.fim && e.fim.tipo === "cedo";
-    const titulo = cedo ? t("fim_titulo_cedo") : t("fim_titulo");
-    const lead = cedo
+    const titulo = t("fim_titulo_" + r.resultado);
+    const lead = r.resultado === "cedo"
       ? t(e.fim.motivo === "o2" ? "fim_lead_o2" : "fim_lead_comida", { quando: textoRotulo(e.fim.quando) })
-      : t("fim_lead_ok", { dias: r.dias, sois: r.sois });
+      : t("fim_lead_ciencia", { dias: r.dias, sois: r.sois, ciencia: r.ciencia, meta: C.metaCiencia });
+    const estrelas = r.resultado === "cumprida" ? 3 : r.resultado === "sobreviveram" ? 2 : 1;
 
     return `
-    <section class="tela tela--fim" aria-labelledby="t-tela">
-      <div class="medalha" aria-hidden="true">
-        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="var(--energia)"/><path d="M32 16l4.7 9.6 10.6 1.5-7.7 7.5 1.8 10.5L32 40l-9.4 5.1 1.8-10.5-7.7-7.5 10.6-1.5z" fill="#fff"/></svg>
+    <section class="tela tela--fim tela--fim-${r.resultado}" aria-labelledby="t-tela">
+      <div class="medalha" role="img" aria-label="${esc(t("estrelas_aria", { n: estrelas }))}">
+        ${[0, 1, 2].map((i) => ico("i-star", "ico estrela" + (i < estrelas ? " estrela--on" : ""))).join("")}
       </div>
       <h1 id="t-tela" tabindex="-1">${titulo}</h1>
       <p class="lead">${lead}</p>
       <ul class="resumo">
         <li>${ico("i-ship")}<b>${r.dias}</b> ${t("resumo_dias")}</li>
         <li>${ico("i-sol")}<b>${r.sois}</b> ${t("resumo_sois")}</li>
+        <li>${ico("i-sci")}<b>${r.ciencia}</b> ${t("resumo_ciencia")}</li>
         <li>${ico("i-rad")}<b>${mSv(r.rad)}</b> mSv</li>
         <li>${ico("i-check")}<b>3</b> ${t("resumo_seguros")}</li>
       </ul>
@@ -494,8 +433,38 @@
     </section>`;
   }
 
+  // ---------- Estado visual que o mapa usa para desenhar ----------
+  function estadoDoMapa() {
+    if (ui.tela === "lancamento") return { modo: "lancamento" };
+    const e = ui.jogo;
+    if (!e || ui.tela !== "jogo") return null;
+    const prev = J.previsao(e);
+    const ev = e.evento && e.evento.visivel ? e.evento : null;
+    return {
+      modo: "jogo",
+      fase: e.fase,
+      alocacao: e.alocacao,
+      max: C.maxPorSistema,
+      tempestade: Boolean(ev && ev.tipo === "solar"),
+      poeira: Boolean(ev && ev.tipo === "poeira"),
+      alarme: e.o2 < 30 || prev.o2 < 30,
+      o2: e.o2,
+      comida: e.comida,
+      bateria: e.bateria,
+      bateriaMax: C.bateriaMax,
+      progresso: (e.turno - 1) / C.viagem.turnos,
+      humores: climaDaTripulacao(e).humores,
+    };
+  }
+
+  // A Lia chegou numa estação do mapa: mostra os controles dela
+  function chegouNaEstacao(k) {
+    ui.estacao = k;
+    desenhar({ quieto: true });
+  }
+
   // ---------- Desenhar a tela atual ----------
-  // quieto = sem animação de entrada (ao mexer nos botões − e +)
+  // quieto = sem animação de entrada (ao mexer nos botões)
   // foco = "titulo" ou um seletor CSS do botão que deve receber o foco
   function desenhar({ quieto = false, foco = null } = {}) {
     const e = ui.jogo;
@@ -503,8 +472,11 @@
     if (ui.tela === "lancamento") html = telaLancamento();
     else if (ui.tela === "diario") html = telaDiario(e);
     else if (ui.tela === "fim") html = telaFim(e);
-    else html = e.fase === "viagem" ? telaViagem(e, quieto) : telaBase(e, quieto);
+    else html = telaJogo(e, quieto);
     app.innerHTML = html;
+
+    const canvas = app.querySelector("#mapa");
+    if (MAPA) MAPA.conectar(canvas, estadoDoMapa, chegouNaEstacao);
 
     if (foco === "titulo") {
       window.scrollTo(0, 0);
@@ -513,7 +485,8 @@
     } else if (foco) {
       // Se o botão ficou desativado, foca o outro botão da mesma linha
       const alvo = app.querySelector(foco);
-      const alternativo = alvo && alvo.closest(".aloc") && alvo.closest(".aloc").querySelector(".btn-passo:not(:disabled)");
+      const linha = alvo && (alvo.closest(".aloc") || alvo.closest(".estacao"));
+      const alternativo = linha && linha.querySelector(".btn-passo:not(:disabled)");
       const escolhido = alvo && !alvo.disabled ? alvo : alternativo;
       if (escolhido) escolhido.focus({ preventScroll: true });
     }
@@ -539,11 +512,14 @@
         J.avancar(ui.jogo);
         ui.tela = ui.jogo.fase === "fim" ? "fim" : "jogo";
       }
+      ui.estacao = null;
+      if (MAPA) MAPA.soltar();
       desenhar({ foco: "titulo" });
     } else if (acao === "adj") {
       const { k, d } = botao.dataset;
       J.ajustar(ui.jogo, k, Number(d));
-      desenhar({ quieto: true, foco: `[data-a="adj"][data-k="${k}"][data-d="${d}"]` });
+      const dentroDaEstacao = Boolean(botao.closest(".estacao"));
+      desenhar({ quieto: true, foco: `${dentroDaEstacao ? ".estacao " : ".aloc "}[data-a="adj"][data-k="${k}"][data-d="${d}"]` });
     } else if (acao === "choose") {
       J.escolher(ui.jogo, botao.dataset.id);
       desenhar({ quieto: true, foco: `[data-a="choose"][data-id="${botao.dataset.id}"]` });
@@ -556,6 +532,7 @@
     } else if (acao === "restart") {
       ui.jogo = null;
       ui.tela = "lancamento";
+      ui.estacao = null;
       desenhar({ foco: "titulo" });
     }
   });

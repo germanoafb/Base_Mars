@@ -24,7 +24,7 @@
   const OPCOES = {
     poeira: [
       { id: "limpar_paineis", efeito: { o2: -8, energia: 3 } },   // sair de traje gasta ar
-      { id: "esperar_base", efeito: { consumoO2: -5 } },           // descansar gasta menos ar
+      { id: "esperar_base", efeito: { consumoO2: -8 } },           // descansar gasta menos ar
     ],
     solar: [
       { id: "abrigo", efeito: { tempestade: 0.3, comida: -4 } },   // abrigo com paredes de água

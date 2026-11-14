@@ -1,8 +1,10 @@
 // Estado da missão e as regras de cada turno.
 //
 // Fases: "viagem" (Terra → Marte, 1 turno = 30 dias) → "base" (1 turno = 1 sol) → "fim".
-// Recursos: oxigênio (%), comida (%) e radiação acumulada (mSv).
-// A cada turno o jogador divide a energia entre oxigênio, comida, escudo e rádio.
+// Recursos: ar e água (%), comida (%) e radiação acumulada (mSv).
+// A cada turno o jogador divide a energia entre suporte de vida, estufa, escudo e rádio.
+// Energia que sobra vai para a BATERIA (usa no turno seguinte).
+// O rádio também envia PONTOS DE CIÊNCIA para a Terra (a meta da missão).
 //
 // JavaScript puro, sem mexer na tela (nada de document/HTML aqui),
 // para poder ser testado em tests/. Textos ficam em i18n.js: aqui só guardamos chaves.
@@ -13,15 +15,18 @@
 
   // ---------- Números do jogo (mude aqui para balancear) ----------
   const CONFIG = {
-    energiaPorTurno: 10,
-    energiaNaPoeira: 5,        // tempestade de poeira: metade da energia
-    maxPorSistema: 5,
+    energiaPorTurno: 8,        // o que os painéis solares geram
+    energiaNaPoeira: 4,        // tempestade de poeira: metade da energia
+    bateriaMax: 6,             // a bateria guarda a energia que sobrou
+    bateriaInicio: 2,
+    maxPorSistema: 4,
+    metaCiencia: 30,           // pontos de ciência para "missão cumprida"
     inicio: { o2: 70, comida: 70 },
-    consumo: { o2: 14, comida: 12 },        // gasto da tripulação por turno
-    producao: { o2: 4, comida: 3.5 },       // ganho por ponto de energia
+    consumo: { o2: 18, comida: 13 },        // gasto da tripulação por turno
+    producao: { o2: 8, comida: 6 },         // ganho por ponto de energia
     viagem: { turnos: 6, diasPorTurno: 30, radDia: 1.8 },  // 180 dias; RAD/Curiosity: ~1,8 mSv/dia
     base: { sois: 10, radSol: 0.64 },                       // RAD/Curiosity: ~0,64 mSv/sol
-    escudo: { fundo: 0.06, tempestade: 0.18 },  // por ponto: corta 6% da radiação comum e 18% da tempestade
+    escudo: { fundo: 0.075, tempestade: 0.22 }, // por ponto: corta 7,5% da radiação comum e 22% da tempestade
     doseTempestade: { X: 40, M: 12 },           // mSv extra no espaço, sem escudo
     fatorMarte: 0.5,           // em Marte, o planeta e o ar bloqueiam parte da tempestade
     limiteCarreira: 600,       // NASA: limite de 600 mSv na carreira de um astronauta
@@ -43,7 +48,9 @@
       o2: CONFIG.inicio.o2,
       comida: CONFIG.inicio.comida,
       rad: 0,
-      alocacao: { o2: 3, food: 3, shield: 2, comms: 2 },
+      alocacao: { o2: 2, food: 2, shield: 2, comms: 2 },
+      bateria: CONFIG.bateriaInicio,
+      ciencia: 0,
       evento: null,                   // primeiro turno é calmo
       diario: [],                     // { turno, rotulo, chave, p }
       historico: [],                  // um registro por turno jogado
@@ -61,8 +68,12 @@
 
   // ---------- Energia ----------
   function energiaDisponivel(e) {
-    const base = e.evento && e.evento.tipo === "poeira" ? CONFIG.energiaNaPoeira : CONFIG.energiaPorTurno;
-    return Math.max(0, base + (efeitoEscolhido(e).energia || 0));
+    return Math.max(0, energiaSolar(e) + e.bateria + (efeitoEscolhido(e).energia || 0));
+  }
+
+  // Só o que os painéis geram neste turno (sem a bateria)
+  function energiaSolar(e) {
+    return e.evento && e.evento.tipo === "poeira" ? CONFIG.energiaNaPoeira : CONFIG.energiaPorTurno;
   }
 
   // ---------- Cartas de decisão ----------
@@ -167,6 +178,7 @@
     if (precisaEscolher(e)) escolher(e, ev.opcoes[ev.opcoes.length - 1]);
 
     const r = calcularTurno(e, true);
+    const sobra = energiaLivre(e);
     const quando = rotulo(e);
     const id = e.historico.length + 1;
     const anotar = (chave, p) => e.diario.push({ turno: id, rotulo: quando, chave, p: p || {} });
@@ -179,10 +191,13 @@
       o2: r.o2,
       comida: r.comida,
       dose: decimo(r.fundo + r.tempestade),
+      bateria: Math.min(CONFIG.bateriaMax, sobra),
     });
     e.o2 = r.o2;
     e.comida = r.comida;
     e.rad = r.rad;
+    e.bateria = Math.min(CONFIG.bateriaMax, sobra);   // o que sobrou fica guardado
+    e.ciencia += e.alocacao.comms;                     // cada ponto no rádio = 1 de ciência
 
     // Diário de bordo
     if (ev && ev.tipo === "solar") {
@@ -255,6 +270,9 @@
     if (h.length && comRadio >= h.length / 2) certo.push({ chave: "fim_certo_radio" });
     else dica.push({ chave: "fim_dica_radio" });
 
+    if (e.ciencia >= CONFIG.metaCiencia) certo.push({ chave: "fim_certo_ciencia", p: { n: e.ciencia } });
+    else dica.push({ chave: "fim_dica_ciencia", p: { n: e.ciencia, meta: CONFIG.metaCiencia } });
+
     if (e.rad < CONFIG.doseBoa) certo.push({ chave: "fim_certo_rad", p: { n: CONFIG.doseBoa } });
     else dica.push({ chave: "fim_dica_rad", p: { n: CONFIG.doseBoa } });
 
@@ -262,7 +280,12 @@
     if (!dica.length) dica.push({ chave: "fim_dica_padrao" });
 
     const turnosViagem = h.filter((x) => x.fase === "viagem").length;
+    // Resultado: "cumprida" (sobreviveu + meta de ciência), "sobreviveram" ou "cedo"
+    const resultado = e.fim && e.fim.tipo === "cedo" ? "cedo"
+      : e.ciencia >= CONFIG.metaCiencia ? "cumprida" : "sobreviveram";
     return {
+      resultado,
+      ciencia: e.ciencia,
       certo,
       dica,
       dias: turnosViagem * CONFIG.viagem.diasPorTurno,
@@ -277,6 +300,7 @@
     SISTEMAS,
     criarJogo,
     energiaDisponivel,
+    energiaSolar,
     efeitoEscolhido,
     precisaEscolher,
     escolher,
