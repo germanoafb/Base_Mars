@@ -146,39 +146,74 @@
   };
 
   // ---------- A VOZ do Orbi ----------
+  // Ajustes: tom (pitch, 0 a 2) e velocidade (rate). Tom acima de 1.4 soa infantil.
+  // Obs.: algumas vozes (ex.: Google no Chrome) ignoram o tom; aí vale mais a escolha da voz.
+  const VOZ = {
+    pt: { rate: 1.15, pitch: 1.5, volume: 1 },
+    en: { rate: 1.1, pitch: 1.45, volume: 1 },
+  };
+  const CHAVE_VOZ = "ares_orbi_voz_";
+
   const sintese = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window ? window.speechSynthesis : null;
   let vozLigada = true;
   let falaId = 0;
   let timersBipe = [];
+  let falasAtivas = [];                              // guarda as falas (senão o navegador pode "esquecer" no meio)
   let aoFalar = () => {};                            // liga/desliga a boca do Orbi
 
   if (sintese) {
     sintese.getVoices();                             // alguns navegadores só carregam as vozes depois do primeiro pedido
-    if (sintese.addEventListener) sintese.addEventListener("voiceschanged", () => {});
+    if (sintese.addEventListener) sintese.addEventListener("voiceschanged", () => { if (raiz && passo >= 0) atualizarRodape(); });
+  }
+
+  const guardarVoz = (chave, v) => { try { localStorage.setItem(chave, v); } catch (e) { /* ok */ } };
+  const lerVoz = (chave) => { try { return localStorage.getItem(chave); } catch (e) { return null; } };
+
+  // Nota de cada voz: as "naturais/neurais" (Edge, Google, Apple) soam muito mais humanas.
+  // As vozes antigas do sistema (as robóticas) ficam por último.
+  function pontuarVoz(v, en) {
+    const n = v.name.toLowerCase();
+    let p = 0;
+    if (/natural|neural/.test(n)) p += 80;
+    if (/online/.test(n)) p += 30;
+    if (/google/.test(n)) p += 50;
+    if (/premium|enhanced|siri/.test(n)) p += 40;
+    if ((en ? /^en[-_]us/i : /^pt[-_]br/i).test(v.lang)) p += 25;
+    if (/francisca|thalita|luciana|fernanda|vit[oó]ria|camila|joana|maria|helena|giovanna|leila|raquel|samantha|aria|jenny|ava|zira|susan|emma|olivia|nora|zoe|allison|karen|moira|female/.test(n)) p += 25;
+    if (/antonio|daniel|felipe|ricardo|jorge|david|mark|guy|ryan|male/.test(n) && !/female/.test(n)) p -= 15;
+    if (/espeak|festival|compact|novelty|bad news|bahh|bells|boing|bubbles|cellos|zarvox|trinoids|whisper|wobble|organ|deranged|hysterical|albert|fred|junior|ralph|good news|jester|superstar/.test(n)) p -= 100;
+    return p;
+  }
+
+  function listaDeVozes() {
+    if (!sintese) return [];
+    const en = idiomaAtual() === "en";
+    const lista = sintese.getVoices().filter((v) => (en ? /^en/i : /^pt/i).test(v.lang));
+    return lista.map((v) => ({ v, nota: pontuarVoz(v, en) })).sort((a, b) => b.nota - a.nota).map((x) => x.v);
   }
 
   function escolherVoz() {
-    if (!sintese) return null;
-    const lista = sintese.getVoices();
-    const en = idiomaAtual() === "en";
-    const exata = lista.filter((v) => (en ? /^en[-_]US/i : /^pt[-_]BR/i).test(v.lang));
-    const parecida = lista.filter((v) => (en ? /^en/i : /^pt/i).test(v.lang));
-    const grupo = exata.length ? exata : parecida;
-    if (!grupo.length) return null;
+    const lista = listaDeVozes();
+    if (!lista.length) return null;
+    const salva = lerVoz(CHAVE_VOZ + idiomaAtual());
+    return lista.find((v) => v.voiceURI === salva) || lista[0];
+  }
 
-    const nomes = en
-      ? /(samantha|susan|ava|jenny|nora|zoe|female|natural|aria|daniel)/i
-      : /(luciana|fernanda|maria|vit[oó]ria|samantha|julia|leila|rosa|nat[aá]lia|female|natural|aria|daniel)/i;
-
-    const local = grupo.filter((v) => v.localService !== false);
-    const favorita = (local.length ? local : grupo).find((v) => nomes.test(v.name) && /natural|female|voice|voice/i.test(v.name + " " + v.lang));
-    return favorita || (local.length ? local[0] : grupo[0]);
+  // Botão "VOZ": passa para a próxima melhor voz do aparelho e fala uma amostra
+  function trocarVoz() {
+    const lista = listaDeVozes().slice(0, 6);
+    if (lista.length < 2) return;
+    const atual = escolherVoz();
+    const i = lista.findIndex((v) => atual && v.voiceURI === atual.voiceURI);
+    guardarVoz(CHAVE_VOZ + idiomaAtual(), lista[(i + 1) % lista.length].voiceURI);
+    falar(t("tut_voz_amostra"));
   }
 
   function pararFala() {
     falaId++;
     timersBipe.forEach(clearTimeout);
     timersBipe = [];
+    falasAtivas = [];
     try { if (sintese) sintese.cancel(); } catch (e) { /* ok */ }
     aoFalar(false);
   }
@@ -199,9 +234,6 @@
     if (!sintese) return false;
     try {
       sintese.resume && sintese.resume();
-      if (sintese.getVoices && !sintese.getVoices().length) {
-        sintese.onvoiceschanged = () => {};
-      }
       return true;
     } catch (e) {
       return false;
@@ -213,38 +245,41 @@
     if (!vozLigada) return;                          // o botão de voz do tutorial manda (o ♪ do jogo só define o começo)
     const id = falaId;
     aoFalar(true);
-    if (!sintese) { balbuciar(texto, id); return; }
-    if (!inicializarVoz()) { balbuciar(texto, id); return; }
+    if (!sintese || !inicializarVoz()) { balbuciar(texto, id); return; }
 
-    // Uma frase por vez: evita o corte de falas longas que alguns navegadores têm
-    const frases = (texto.match(/[^.!?]+[.!?]*/g) || [texto]).map((s) => s.trim()).filter(Boolean);
-    let i = 0;
+    // Frases curtas (evita o corte de falas longas), todas na fila de uma vez:
+    // assim o navegador já prepara a próxima e não há pausa entre as frases.
+    const frases = (texto.replace(/\s+/g, " ").match(/[^.!?…]+[.!?…]*/g) || [texto]).map((s) => s.trim()).filter(Boolean);
+    const emPt = idiomaAtual() !== "en";
+    const cfg = emPt ? VOZ.pt : VOZ.en;
+    const v = escolherVoz();
     let comecou = false;
-    const proxima = () => {
-      if (id !== falaId) return;
-      if (i >= frases.length) { aoFalar(false); return; }
-      const u = new SpeechSynthesisUtterance(frases[i++]);
-      const v = escolherVoz();
-      const emPt = idiomaAtual() !== "en";
+    let restantes = frases.length;
+    const terminou = () => { if (id !== falaId) return; restantes -= 1; if (restantes <= 0) aoFalar(false); };
+
+    falasAtivas = frases.map((f) => {
+      const u = new SpeechSynthesisUtterance(f);
       u.lang = emPt ? "pt-BR" : "en-US";
       if (v) { try { u.voice = v; u.lang = v.lang; } catch (e) { /* voz estranha: usa a padrão do idioma */ } }
-      u.pitch = emPt ? 1.08 : 1.04;
-      u.rate = emPt ? 0.98 : 0.96;
-      u.volume = 0.94;
+      u.pitch = cfg.pitch;
+      u.rate = cfg.rate;
+      u.volume = cfg.volume;
       u.onstart = () => { comecou = true; };
-      u.onend = proxima;
-      u.onerror = proxima;
-      sintese.speak(u);
-    };
-    timersBipe.push(setTimeout(() => { if (id === falaId) proxima(); }, 80));
-    // Se o aparelho não começou a falar em 2 segundos, usa os bipes do Orbi
+      u.onend = terminou;
+      u.onerror = terminou;
+      return u;
+    });
+    timersBipe.push(setTimeout(() => { if (id === falaId) falasAtivas.forEach((u) => sintese.speak(u)); }, 80));
+
+    // Se o aparelho não começou a falar em 5 segundos, usa os bipes do Orbi
+    // (vozes online podem demorar um pouco para a primeira frase)
     timersBipe.push(setTimeout(() => {
       if (id !== falaId || comecou) return;
       try { sintese.cancel(); } catch (e) { /* ok */ }
       const novo = ++falaId;
       aoFalar(true);
       balbuciar(texto, novo);
-    }, 2000));
+    }, 5000));
   }
 
   // ---------- Estado do tutorial ----------
@@ -569,6 +604,7 @@
             <span class="idioma-pt" lang="pt-BR">PT</span><span class="idioma-sep" aria-hidden="true">/</span><span class="idioma-en" lang="en">EN</span>
           </button>
           <button class="btn-idioma tut-voz" type="button" data-tut="voz" aria-pressed="true"></button>
+          <button class="btn-idioma tut-trocar" type="button" data-tut="trocarvoz"></button>
         </div>
 
         <div class="tut-cena">
@@ -674,6 +710,10 @@
     voz.textContent = vozLigada ? "♪" : "✕";
     voz.setAttribute("aria-pressed", String(vozLigada));
     voz.setAttribute("aria-label", t(vozLigada ? "tut_voz_desligar" : "tut_voz_ligar"));
+    const trocar = P('[data-tut="trocarvoz"]');
+    trocar.textContent = t("tut_voz_trocar_curto");
+    trocar.setAttribute("aria-label", t("tut_voz_trocar"));
+    trocar.style.display = vozLigada && listaDeVozes().length > 1 ? "" : "none";   // só aparece se o aparelho tem mais de uma voz
   }
 
   function mostrarPasso(n, { falarAgora = true } = {}) {
@@ -767,6 +807,7 @@
         atualizarRodape();
         return;
       }
+      if (acao === "trocarvoz") { trocarVoz(); return; }
       if (acao === "voltar") { if (passo > 0) mostrarPasso(passo - 1); return; }
       if (acao === "repetir") { const def = PASSOS[passo]; dizer(P(".tut-texto-sr").textContent || def.texto()); return; }
       if (acao === "proximo") {
