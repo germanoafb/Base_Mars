@@ -3,6 +3,10 @@
 // e chama as regras em static/js/game/ (window.ARES.jogo).
 // As regras do jogo NÃO ficam aqui. O mapa em pixel art fica em mapa.js.
 //
+// A tela do jogo cabe na tela do aparelho, sem rolar:
+//   esquerda = mapa (com placar por cima) + tripulação
+//   direita  = energia, 4 sistemas, 3 barras e o botão "Próximo"
+//
 // Ordem dos scripts no index.html: i18n.js → dados → game/*.js → mapa.js → main.js
 
 (function () {
@@ -14,8 +18,11 @@
   const MAPA = window.MAPA;
   const app = document.getElementById("app");
 
-  // O que está na tela agora. estacao = estação do mapa onde a Lia está.
-  const ui = { tela: "lancamento", jogo: null, estacao: null };
+  // O que está na tela agora.
+  //   jogador      = índice do personagem escolhido (0 Lia, 1 Davi, 2 Yara)
+  //   estacao      = estação do mapa onde o personagem está
+  //   recemAvancou = acabou de passar o turno (a fala mostra o diário)
+  const ui = { tela: "lancamento", jogo: null, estacao: null, jogador: 0, recemAvancou: false };
 
   // Tripulação: cor da pele, do cabelo e do traje (o mesmo do mapa)
   const TRIPULACAO = [
@@ -23,14 +30,14 @@
     { nome: "Davi", papel: "papel_engenheiro", pele: "#8d5524", cabelo: "#1b1b1b", traje: "#6fd3ff" },
     { nome: "Yara", papel: "papel_botanica", pele: "#e0ac69", cabelo: "#a0522d", traje: "#6ee08a" },
   ];
+  const jogador = () => TRIPULACAO[ui.jogador];
 
-  // Estações do mapa: ícone e chaves de texto
-  const ESTACAO = {
-    food: { icone: "i-food", cls: "aloc--comida" },
-    o2: { icone: "i-o2", cls: "aloc--o2" },
-    shield: { icone: "i-shield", cls: "aloc--escudo" },
-    comms: { icone: "i-comms", cls: "aloc--comms" },
-    home: { icone: "i-home", cls: "" },
+  // Sistemas: ícone, classe de cor e nome
+  const SISTEMA = {
+    o2: { icone: "i-o2", cls: "aloc--o2", nome: "oxigenio" },
+    food: { icone: "i-food", cls: "aloc--comida", nome: "comida" },
+    shield: { icone: "i-shield", cls: "aloc--escudo", nome: "escudo" },
+    comms: { icone: "i-comms", cls: "aloc--comms", nome: "radio" },
   };
 
   // ---------- Ajudantes ----------
@@ -46,6 +53,11 @@
   }
 
   const textoRotulo = (r) => t(r.tipo === "dia" ? "rotulo_dia" : "rotulo_sol", { n: r.n });
+
+  // Botão "?" que abre uma explicação curta (termos científicos, como cada sistema funciona)
+  function ajuda(textoHtml, lado = "dir") {
+    return `<details class="ajuda ajuda--${lado}"><summary aria-label="${esc(t("ajuda_aria"))}"><span aria-hidden="true">?</span></summary><div class="ajuda-texto">${textoHtml}</div></details>`;
+  }
 
   // Chip de previsão: seta + texto, cor conforme bom/ruim (nunca só a cor)
   function chip(direcao, sobeEhBom, texto) {
@@ -106,70 +118,52 @@
     return `<svg class="rosto-svg" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${px.join("")}</svg>`;
   }
 
-  // ---------- TELA 1: lançamento ----------
+  // ---------- TELA 1: lançamento + escolha do personagem ----------
   function telaLancamento() {
-    const astronautas = TRIPULACAO.map((a) => `
-      <li class="astronauta" style="--traje:${a.traje}">
-        ${rosto(a)}
-        <span class="astronauta-nome">${a.nome}</span>
-        <span class="astronauta-papel">${t(a.papel)}</span>
-      </li>`).join("");
+    const astronautas = TRIPULACAO.map((a, i) => {
+      const meu = ui.jogador === i;
+      return `
+      <li>
+        <button class="astronauta${meu ? " astronauta--escolhido" : ""}" type="button" data-a="pick" data-i="${i}" aria-pressed="${meu}" style="--traje:${a.traje}">
+          ${rosto(a)}
+          <span class="astronauta-nome">${a.nome}</span>
+          <span class="astronauta-papel">${t(a.papel)}</span>
+          <span class="astronauta-voce">${meu ? "✓ " + t("voce") : t("escolher")}</span>
+        </button>
+      </li>`;
+    }).join("");
 
     return `
     <section class="tela tela--lancamento" aria-labelledby="t-tela">
       <canvas class="mapa-canvas mapa-canvas--enfeite" id="mapa" role="img" aria-label="${esc(t("mapa_aria_lancamento"))}"></canvas>
-      <h1 id="t-tela" tabindex="-1">${t("lanc_titulo")}</h1>
-      <p class="lead">${t("lanc_lead")}</p>
-      <p class="explica">${t("lanc_regras", { dias: C.viagem.turnos * C.viagem.diasPorTurno, sois: C.base.sois, energia: C.energiaPorTurno, meta: C.metaCiencia })}</p>
-      <h2 class="subtitulo">${t("tripulacao")}</h2>
-      <ul class="tripulacao">${astronautas}</ul>
-      <button class="btn btn-principal" type="button" data-a="next">${ico("i-ship")} ${t("lancar")}</button>
+      <div class="lancamento-texto">
+        <h1 id="t-tela" tabindex="-1">${t("lanc_titulo")}</h1>
+        <p class="lead">${t("lanc_lead")}</p>
+        <p class="explica">${t("lanc_regras", { dias: C.viagem.turnos * C.viagem.diasPorTurno, sois: C.base.sois, energia: C.energiaPorTurno, meta: C.metaCiencia })}</p>
+        <h2 class="subtitulo">${t("escolha_personagem")}</h2>
+        <ul class="tripulacao">${astronautas}</ul>
+        <button class="btn btn-principal" type="button" data-a="next">${ico("i-ship")} ${t("lancar")}</button>
+      </div>
     </section>`;
   }
 
-  // ---------- Painel: energia + 3 barras ----------
-  function barra(cls, icone, nome, valor, previsaoHtml, pct, pctPrev, aria, extra = "") {
+  // ---------- Painel da direita: energia, sistemas e barras ----------
+  function barra(cls, icone, nome, valor, previsaoHtml, pct, pctPrev, aria, ajudaHtml = "") {
     return `
       <div class="barra ${cls}">
         <div class="barra-topo">
           ${ico(icone)}
           <span class="barra-nome">${nome}</span>
+          ${ajudaHtml}
           <span class="barra-num">${valor} ${previsaoHtml}</span>
         </div>
         <div class="barra-trilho" role="meter" aria-label="${esc(nome)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}" aria-valuetext="${esc(aria)}">
           <div class="barra-prev" style="--prev:${pctPrev}%"></div>
           <div class="barra-fill" style="--val:${pct}%"></div>
         </div>
-        ${extra}
       </div>`;
   }
 
-  function painel(e) {
-    const prev = J.previsao(e);
-    const pctRad = (v) => Math.min(100, (v / C.limiteCarreira) * 100);
-    return `
-      <div class="painel">
-        <div class="energia" role="status">
-          ${ico("i-energy", "ico ico--energia")}
-          <span class="energia-rotulo">${t("energia_livre")}</span>
-          <span class="energia-valor"><b>${J.energiaLivre(e)}</b> ${t("de")} ${J.energiaDisponivel(e)}</span>
-          <span class="energia-detalhe">
-            ${ico("i-sol")} ${t("energia_paineis", { n: J.energiaSolar(e) })}
-            · ${ico("i-battery")} ${t("energia_bateria", { n: e.bateria, max: C.bateriaMax })}
-          </span>
-          <span class="energia-dica">${t("energia_sobra", { max: C.bateriaMax })}</span>
-        </div>
-        <div class="barras">
-          ${barra("barra--o2", "i-o2", t("oxigenio"), `${e.o2}%`, chip(prev.o2 - e.o2, true, `${prev.o2}%`), e.o2, prev.o2, `${e.o2}%`,
-            `<p class="explica">${t("explica_suporte")}</p>`)}
-          ${barra("barra--comida", "i-food", t("comida"), `${e.comida}%`, chip(prev.comida - e.comida, true, `${prev.comida}%`), e.comida, prev.comida, `${e.comida}%`)}
-          ${barra("barra--rad", "i-rad", t("radiacao"), `${mSv(e.rad)} mSv`, chip(1, false, mSv(prev.rad)), pctRad(e.rad), pctRad(prev.rad), `${mSv(e.rad)} mSv`,
-            `<p class="explica">${t("explica_msv")} ${t("rad_limite", { n: C.limiteCarreira })}</p>`)}
-        </div>
-      </div>`;
-  }
-
-  // ---------- Divisão de energia (− e +) ----------
   function controles(e, k) {
     const valor = e.alocacao[k];
     const livre = J.energiaLivre(e);
@@ -191,54 +185,49 @@
       : `<span class="previsao previsao--ruim">—</span>`;
   }
 
-  function linhaAlocacao(e, k, nomeChave) {
-    const est = ESTACAO[k];
-    const aqui = ui.estacao === k;
+  // Cartão de um sistema: ícone, nome, "?", efeito e os botões − e +
+  function cartaoSistema(e, k) {
+    const s = SISTEMA[k];
     return `
-      <div class="aloc ${est.cls}${aqui ? " aloc--aqui" : ""}">
-        ${ico(est.icone)}
-        <span class="aloc-nome">${t(nomeChave)}</span>
-        ${controles(e, k)}
-        ${efeitoHtml(e, k)}
+      <div class="sistema ${s.cls}${ui.estacao === k ? " aloc--aqui" : ""}">
+        <div class="sistema-topo">
+          ${ico(s.icone)}
+          <span class="sistema-nome">${t(s.nome)}</span>
+          ${ajuda(t(`est_${k}_desc`), k === "o2" || k === "shield" ? "esq" : "dir")}
+          ${efeitoHtml(e, k)}
+        </div>
+        <div class="sistema-controles">${controles(e, k)}</div>
       </div>`;
   }
 
-  function divisaoEnergia(e) {
+  function painel(e) {
+    const prev = J.previsao(e);
+    const pctRad = (v) => Math.min(100, (v / C.limiteCarreira) * 100);
     return `
-      <div class="energia-divisao">
-        <h2 class="subtitulo">${t("para_onde")}</h2>
-        ${linhaAlocacao(e, "o2", "oxigenio")}
-        ${linhaAlocacao(e, "food", "comida")}
-        ${linhaAlocacao(e, "shield", "escudo")}
-        ${linhaAlocacao(e, "comms", "radio")}
-        <p class="explica">${t("explica_escudo_radio")}</p>
+      <div class="painel">
+        <div class="energia" role="status">
+          ${ico("i-energy", "ico ico--energia")}
+          <span class="energia-rotulo">${t("energia_livre")}</span>
+          <span class="energia-valor"><b>${J.energiaLivre(e)}</b> ${t("de")} ${J.energiaDisponivel(e)}</span>
+          <span class="energia-detalhe">${ico("i-sol")} ${J.energiaSolar(e)} + ${ico("i-battery")} ${e.bateria}/${C.bateriaMax}</span>
+          ${ajuda(`${t("energia_paineis", { n: J.energiaSolar(e) })} + ${t("energia_bateria", { n: e.bateria, max: C.bateriaMax })}. ${t("energia_sobra", { max: C.bateriaMax })}`)}
+        </div>
+        <div class="sistemas">
+          ${cartaoSistema(e, "o2")}
+          ${cartaoSistema(e, "food")}
+          ${cartaoSistema(e, "shield")}
+          ${cartaoSistema(e, "comms")}
+        </div>
+        <div class="barras">
+          ${barra("barra--o2", "i-o2", t("oxigenio"), `${e.o2}%`, chip(prev.o2 - e.o2, true, `${prev.o2}%`), e.o2, prev.o2, `${e.o2}%`, ajuda(t("explica_suporte")))}
+          ${barra("barra--comida", "i-food", t("comida"), `${e.comida}%`, chip(prev.comida - e.comida, true, `${prev.comida}%`), e.comida, prev.comida, `${e.comida}%`)}
+          ${barra("barra--rad", "i-rad", t("radiacao"), `${mSv(e.rad)} mSv`, chip(1, false, mSv(prev.rad)), pctRad(e.rad), pctRad(prev.rad), `${mSv(e.rad)} mSv`,
+            ajuda(`${t("explica_msv")} ${t("rad_limite", { n: C.limiteCarreira })} ${t("aviso_rad")}`))}
+        </div>
       </div>`;
   }
 
-  // ---------- Painel da estação onde a Lia está (embaixo do mapa) ----------
-  function painelEstacao(e) {
-    const k = ui.estacao;
-    if (!k) return `<div class="estacao estacao--vazia" aria-live="polite">${ico("i-home")} <span>${t("mapa_dica")}</span></div>`;
-    const est = ESTACAO[k];
-    const nome = t(`est_${k}_nome_${e.fase}`) !== `est_${k}_nome_${e.fase}` ? t(`est_${k}_nome_${e.fase}`) : t(`est_${k}_nome`);
-    if (k === "home") {
-      const esperando = J.precisaEscolher(e);
-      return `
-      <div class="estacao" aria-live="polite">
-        <h2 class="estacao-nome">${ico(est.icone)} ${nome}</h2>
-        <p>${t("est_home_desc")}</p>
-        <button class="btn btn-principal" type="button" data-a="next"${esperando ? " disabled" : ""}>${t("dormir")}</button>
-      </div>`;
-    }
-    return `
-      <div class="estacao ${est.cls}" aria-live="polite">
-        <h2 class="estacao-nome">${ico(est.icone)} ${nome}</h2>
-        <p>${t(`est_${k}_desc`)}</p>
-        <div class="estacao-controles">${controles(e, k)} ${efeitoHtml(e, k)}</div>
-      </div>`;
-  }
-
-  // ---------- Carta de decisão (só eventos que a tripulação já conhece) ----------
+  // ---------- Carta de decisão (aparece por cima do mapa) ----------
   const ICONE_EVENTO = { poeira: "i-dust", solar: "i-flare", filtro: "i-o2", praga: "i-food" };
 
   // Chips com o efeito de cada opção: ícone + número (nunca só cor)
@@ -257,28 +246,34 @@
 
   function cartaEvento(e) {
     const ev = e.evento;
-    if (!ev || !ev.visivel) return "";
+    if (!ev || !ev.visivel || ev.escolha) return "";
     const texto = ev.tipo === "solar"
       ? t("ev_solar_texto", { classe: esc(ev.classe), data: dataCurta(ev.data) })
       : t(`ev_${ev.tipo}_texto`);
-    const opcoes = (ev.opcoes || []).map((id) => {
-      const escolhida = ev.escolha === id;
-      return `
-          <button class="btn-escolha${escolhida ? " escolhida" : ""}" type="button" data-a="choose" data-id="${id}" aria-pressed="${escolhida}">
+    const opcoes = (ev.opcoes || []).map((id) => `
+          <button class="btn-escolha" type="button" data-a="choose" data-id="${id}">
             <span class="escolha-texto">${t("op_" + id)}</span>
             <span class="escolha-efeitos">${chipsEfeito(window.ARES.eventos.efeitoDe(ev.tipo, id))}</span>
-          </button>`;
-    }).join("");
+          </button>`).join("");
     return `
-      <div class="evento evento--${ev.tipo}" role="group" aria-labelledby="ev-titulo">
-        ${ico(ICONE_EVENTO[ev.tipo] || "i-flare")}
-        <div class="evento-corpo">
-          <h2 class="evento-titulo" id="ev-titulo">${t(`ev_${ev.tipo}_titulo`)}</h2>
-          <p>${texto}</p>
-          <p class="evento-pergunta">${t("ev_pergunta")}</p>
-          <div class="escolhas">${opcoes}</div>
+      <div class="carta-camada">
+        <div class="evento evento--${ev.tipo}" role="group" aria-labelledby="ev-titulo">
+          ${ico(ICONE_EVENTO[ev.tipo] || "i-flare")}
+          <div class="evento-corpo">
+            <h2 class="evento-titulo" id="ev-titulo">${t(`ev_${ev.tipo}_titulo`)}</h2>
+            <p>${texto}</p>
+            <p class="evento-pergunta">${t("ev_pergunta")}</p>
+            <div class="escolhas">${opcoes}</div>
+          </div>
         </div>
       </div>`;
+  }
+
+  // Depois de escolher: um selo pequeno lembra a decisão do turno
+  function seloDecisao(e) {
+    const ev = e.evento;
+    if (!ev || !ev.visivel || !ev.escolha) return "";
+    return `<p class="selo-decisao evento--${ev.tipo}">${ico(ICONE_EVENTO[ev.tipo] || "i-flare")} <b>${t(`ev_${ev.tipo}_titulo`)}</b> ${t("op_" + ev.escolha)}</p>`;
   }
 
   // ---------- Tripulação viva: humor de cada um + uma fala ----------
@@ -293,10 +288,14 @@
       humorPor(prev.comida),                                                           // Yara cuida da estufa
     ];
 
-    // Fala: a situação mais urgente primeiro. [quem fala (0 Lia, 1 Davi, 2 Yara), chave]
+    // Fala: a situação mais urgente primeiro. [quem fala, chave] ou [quem fala, null, html]
     let fala;
     const giro = (e.turno + (e.fase === "base" ? 1 : 0)) % 3;
+    const ultimo = e.diario.length ? e.diario[e.diario.length - 1].turno : null;
+    const doTurno = e.diario.filter((x) => x.turno === ultimo);
     if (ev && !ev.escolha) fala = ev.tipo === "solar" ? [1, "fala_tempestade"] : ev.tipo === "poeira" ? [1, "fala_poeira"] : ev.tipo === "praga" ? [2, "fala_praga"] : [0, "fala_escolha"];
+    else if (ui.estacao) fala = [ui.jogador, null, `<b>${t(`est_${ui.estacao}_nome_${e.fase}`) !== `est_${ui.estacao}_nome_${e.fase}` ? t(`est_${ui.estacao}_nome_${e.fase}`) : t(`est_${ui.estacao}_nome`)}:</b> ${t(`est_${ui.estacao}_desc`)}`];
+    else if (ui.recemAvancou && doTurno.length) fala = [ui.jogador, null, `${ico("i-log")} ${doTurno.map(textoEntrada).join(" ")}`];
     else if (prev.o2 < 25) fala = [0, "fala_ar_critico"];
     else if (prev.comida < 25) fala = [2, "fala_comida_critica"];
     else if (tempestadePerigosa) fala = [1, "fala_mais_escudo"];
@@ -304,6 +303,7 @@
     else if (prev.o2 < 45) fala = [0, "fala_ar_baixo"];
     else if (prev.comida < 45) fala = [2, "fala_comida_baixa"];
     else if (e.fase === "base" && e.turno === 1) fala = [0, "fala_chegada"];
+    else if (!doTurno.length) fala = [ui.jogador, null, t("mapa_dica", { nome: jogador().nome })];
     else fala = [giro, "fala_tudo_bem_" + giro];
     return { humores, fala };
   }
@@ -311,71 +311,69 @@
   function tripulacaoViva(e) {
     const { humores, fala } = climaDaTripulacao(e);
     const rostos = TRIPULACAO.map((p, i) => `
-        <li class="rosto rosto--${humores[i]}${fala[0] === i ? " rosto--falando" : ""}" style="--traje:${p.traje}">
+        <li class="rosto rosto--${humores[i]}${fala[0] === i ? " rosto--falando" : ""}${ui.jogador === i ? " rosto--jogador" : ""}" style="--traje:${p.traje}">
           ${rosto(p, humores[i])}
           <span class="rosto-nome">${p.nome}</span>
-          <span class="sr-only">${t("humor_" + humores[i], { nome: p.nome })}</span>
+          <span class="sr-only">${t("humor_" + humores[i], { nome: p.nome })}${ui.jogador === i ? " (" + t("voce") + ")" : ""}</span>
         </li>`).join("");
+    const texto = fala[1] ? t(fala[1]) : fala[2];
     return `
       <div class="tripulacao-viva">
         <ul class="rostos">${rostos}</ul>
-        <p class="fala fala--${fala[0]}" role="status"><b>${TRIPULACAO[fala[0]].nome}:</b> ${t(fala[1])}</p>
+        <p class="fala" role="status"><b>${TRIPULACAO[fala[0]].nome}:</b> ${texto}</p>
       </div>`;
   }
 
-  // Últimas entradas do diário (as do turno anterior)
-  function diarioUltimo(e) {
-    const ultimo = e.diario.length ? e.diario[e.diario.length - 1].turno : null;
-    const entradas = e.diario.filter((x) => x.turno === ultimo);
-    const texto = entradas.length ? entradas.map((x) => `<p>${textoEntrada(x)}</p>`).join("") : `<p>${t("diario_vazio")}</p>`;
-    return `<div class="diario-ultimo">${ico("i-log")}<div>${texto}</div></div>`;
-  }
-
-  // ---------- TELAS 2 e 3: viagem e base ----------
-  function botoesJogo(e) {
-    const ultimoViagem = e.fase === "viagem" && e.turno >= C.viagem.turnos;
-    const ultimoSol = e.fase === "base" && e.turno >= C.base.sois;
-    const chave = ultimoViagem ? "pousar" : ultimoSol ? "terminar" : e.fase === "viagem" ? "proximo_turno" : "proximo_sol";
-    const esperando = J.precisaEscolher(e);
-    return `
-      <button class="btn btn-secundario" type="button" data-a="log">${ico("i-log")} ${t("ver_diario")}</button>
-      ${esperando ? `<p class="dica-escolha" id="dica-escolha">${t("dica_escolha")}</p>` : ""}
-      <button class="btn btn-principal" type="button" data-a="next"${esperando ? ' disabled aria-describedby="dica-escolha"' : ""}>${t(chave)}</button>`;
-  }
-
+  // ---------- TELAS 2 e 3: viagem e base (uma tela só, sem rolar) ----------
   function telaJogo(e, quieto) {
     const naViagem = e.fase === "viagem";
     const total = C.viagem.turnos * C.viagem.diasPorTurno;
     const progresso = Math.round(((e.turno - 1) / C.viagem.turnos) * 100);
     const titulo = naViagem
-      ? t("viagem_titulo", { n: (e.turno - 1) * C.viagem.diasPorTurno + 1, total })
+      ? t("viagem_titulo_curto", { n: (e.turno - 1) * C.viagem.diasPorTurno + 1, total })
       : t("sol_titulo", { n: e.turno, total: C.base.sois });
+
+    const ultimoViagem = naViagem && e.turno >= C.viagem.turnos;
+    const ultimoSol = !naViagem && e.turno >= C.base.sois;
+    const chave = ultimoViagem ? "pousar" : ultimoSol ? "terminar" : naViagem ? "proximo_turno" : "proximo_sol";
+    const esperando = J.precisaEscolher(e);
+    const dormir = ui.estacao === "home";
+
     return `
     <section class="tela tela--jogo tela--${e.fase}${quieto ? " sem-animacao" : ""}" aria-labelledby="t-tela">
-      <div class="cena">
-        <div class="cena-topo">
-          <h1 id="t-tela" class="cena-titulo" tabindex="-1">${titulo}</h1>
-          <span class="selo-ciencia" title="${esc(t("ciencia"))}">${ico("i-sci")} <b>${e.ciencia}</b>/${C.metaCiencia}<span class="sr-only"> ${t("ciencia")}</span></span>
-        </div>
-        ${naViagem ? "" : `<p class="explica">${t("explica_sol")}</p>`}
-        <canvas class="mapa-canvas" id="mapa" role="img" aria-label="${esc(t(naViagem ? "mapa_aria_viagem" : "mapa_aria_base"))}"></canvas>
-        ${naViagem ? `<div class="mapa" style="--progresso:${progresso}%">
-          <div class="mapa-trilha" aria-hidden="true">
-            <span class="mapa-ponto mapa-ponto--terra"></span>
-            <div class="mapa-linha"><div class="mapa-feito"></div></div>
-            <span class="mapa-ponto mapa-ponto--marte"></span>
+      <div class="jogo-grade">
+        <div class="jogo-esquerda">
+          <div class="mapa-caixa">
+            <div class="mapa-moldura">
+              <canvas class="mapa-canvas" id="mapa" role="img" aria-label="${esc(t(naViagem ? "mapa_aria_viagem" : "mapa_aria_base", { nome: jogador().nome }))}"></canvas>
+              <div class="hud hud--topo">
+                <h1 id="t-tela" class="hud-titulo" tabindex="-1">${titulo}</h1>
+                ${naViagem ? "" : ajuda(t("explica_sol"), "esq")}
+                <span class="selo-ciencia">${ico("i-sci")} <b>${e.ciencia}</b>/${C.metaCiencia}<span class="sr-only"> ${t("ciencia")}</span></span>
+              </div>
+              ${naViagem ? `
+              <div class="hud hud--rodape mapa" style="--progresso:${progresso}%">
+                <span class="mapa-ponto mapa-ponto--terra" aria-hidden="true"></span>
+                <div class="mapa-linha" aria-hidden="true"><div class="mapa-feito"></div></div>
+                <span class="mapa-ponto mapa-ponto--marte" aria-hidden="true"></span>
+                <span class="hud-legenda">${t("caminho", { n: progresso })}</span>
+              </div>` : ""}
+            </div>
           </div>
-          <p class="mapa-legenda"><span>${t("terra")}</span><span>${t("caminho", { n: progresso })}</span><span>${t("marte")}</span></p>
-        </div>` : ""}
-        ${painelEstacao(e)}
-        ${tripulacaoViva(e)}
-        ${naViagem && e.turno === 1 ? `<p class="aviso aviso--rad">${ico("i-rad")} <span>${t("aviso_rad")}</span></p>` : ""}
+          ${seloDecisao(e)}
+          ${tripulacaoViva(e)}
+          ${cartaEvento(e)}
+        </div>
+
+        <div class="jogo-direita">
+          ${painel(e)}
+          <div class="jogo-acoes">
+            <button class="btn btn-secundario btn-diario" type="button" data-a="log">${ico("i-log")} <span>${t("diario_curto")}</span></button>
+            <button class="btn btn-principal${dormir ? " btn--destaque" : ""}" type="button" data-a="next"${esperando ? ' disabled aria-describedby="dica-escolha"' : ""}>${dormir ? t("dormir") : t(chave)}</button>
+          </div>
+          ${esperando ? `<p class="dica-escolha" id="dica-escolha">${t("dica_escolha")}</p>` : ""}
+        </div>
       </div>
-      ${cartaEvento(e)}
-      ${painel(e)}
-      ${divisaoEnergia(e)}
-      ${diarioUltimo(e)}
-      ${botoesJogo(e)}
     </section>`;
   }
 
@@ -454,13 +452,17 @@
       bateriaMax: C.bateriaMax,
       progresso: (e.turno - 1) / C.viagem.turnos,
       humores: climaDaTripulacao(e).humores,
+      jogador: ui.jogador,
+      trajes: TRIPULACAO.map((p) => p.traje),
     };
   }
 
-  // A Lia chegou numa estação do mapa: mostra os controles dela
+  // O personagem chegou numa estação do mapa: destaca o sistema e leva o foco até ele
   function chegouNaEstacao(k) {
     ui.estacao = k;
-    desenhar({ quieto: true });
+    ui.recemAvancou = false;
+    const foco = k === "home" ? '[data-a="next"]' : `.sistema [data-a="adj"][data-k="${k}"][data-d="1"]`;
+    desenhar({ quieto: true, foco });
   }
 
   // ---------- Desenhar a tela atual ----------
@@ -480,13 +482,14 @@
 
     if (foco === "titulo") {
       window.scrollTo(0, 0);
-      const h1 = app.querySelector("h1");
-      if (h1) h1.focus({ preventScroll: true });
+      // Se tem carta de decisão, o foco vai direto para a primeira opção
+      const alvo = app.querySelector(".btn-escolha") || app.querySelector("h1");
+      if (alvo) alvo.focus({ preventScroll: true });
     } else if (foco) {
-      // Se o botão ficou desativado, foca o outro botão da mesma linha
+      // Se o botão ficou desativado, foca o outro botão do mesmo sistema
       const alvo = app.querySelector(foco);
-      const linha = alvo && (alvo.closest(".aloc") || alvo.closest(".estacao"));
-      const alternativo = linha && linha.querySelector(".btn-passo:not(:disabled)");
+      const caixa = alvo && alvo.closest(".sistema");
+      const alternativo = caixa && caixa.querySelector(".btn-passo:not(:disabled)");
       const escolhido = alvo && !alvo.disabled ? alvo : alternativo;
       if (escolhido) escolhido.focus({ preventScroll: true });
     }
@@ -504,13 +507,18 @@
       return;
     }
 
-    if (acao === "next") {
+    if (acao === "pick") {
+      ui.jogador = Number(botao.dataset.i) || 0;
+      desenhar({ quieto: true, foco: `[data-a="pick"][data-i="${ui.jogador}"]` });
+    } else if (acao === "next") {
       if (ui.tela === "lancamento") {
         ui.jogo = J.criarJogo();
         ui.tela = "jogo";
+        ui.recemAvancou = false;
       } else {
         J.avancar(ui.jogo);
         ui.tela = ui.jogo.fase === "fim" ? "fim" : "jogo";
+        ui.recemAvancou = true;
       }
       ui.estacao = null;
       if (MAPA) MAPA.soltar();
@@ -518,11 +526,12 @@
     } else if (acao === "adj") {
       const { k, d } = botao.dataset;
       J.ajustar(ui.jogo, k, Number(d));
-      const dentroDaEstacao = Boolean(botao.closest(".estacao"));
-      desenhar({ quieto: true, foco: `${dentroDaEstacao ? ".estacao " : ".aloc "}[data-a="adj"][data-k="${k}"][data-d="${d}"]` });
+      ui.recemAvancou = false;
+      desenhar({ quieto: true, foco: `.sistema [data-a="adj"][data-k="${k}"][data-d="${d}"]` });
     } else if (acao === "choose") {
       J.escolher(ui.jogo, botao.dataset.id);
-      desenhar({ quieto: true, foco: `[data-a="choose"][data-id="${botao.dataset.id}"]` });
+      ui.recemAvancou = false;
+      desenhar({ quieto: true, foco: '[data-a="next"]' });
     } else if (acao === "log") {
       ui.tela = "diario";
       desenhar({ foco: "titulo" });

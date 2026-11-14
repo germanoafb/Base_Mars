@@ -1,7 +1,7 @@
 // Mapa em PIXEL ART desenhado num <canvas> (ideia e desenhos originais do design da equipe).
 //
-// A Lia (traje laranja) anda pelo mapa. Tocar numa estação faz ela ir até lá,
-// e o main.js mostra os controles daquela estação embaixo do mapa.
+// O personagem escolhido anda pelo mapa. Tocar numa estação faz ele ir até lá,
+// e o main.js destaca os controles daquela estação no painel ao lado.
 // Estações: estufa (comida), cabine/habitat (dormir = passar o turno),
 // suporte de vida (ar e água), escudo e rádio.
 //
@@ -151,16 +151,22 @@
   }
 
   function tripulacao(e, chaoY) {
-    // Davi perto do suporte de vida, Yara perto da estufa (andam de leve)
-    const dx = reduzir ? 0 : Math.sin(T / 60) * 8;
-    const yx = reduzir ? 0 : Math.sin(T / 45 + 1) * 6;
-    astronauta(210 + dx, chaoY + 6, "#6fd3ff", T / 3);
-    balaoHumor(210 + dx, chaoY + 6, e.humores[1]);
-    astronauta(88 + yx, chaoY + 8, "#6ee08a", T / 4);
-    balaoHumor(88 + yx, chaoY + 8, e.humores[2]);
-    // Lia (a jogadora) por cima
-    astronauta(P.x - 3, P.y, "#ff8a4c", P.andando ? P.passo : 0);
-    balaoHumor(P.x - 3, P.y, e.humores[0]);
+    // Quem não é o jogador anda de leve perto de uma estação (suporte de vida e estufa)
+    const lugares = [
+      { x: 210, amp: 8, periodo: 60, y: 6, passo: 3 },
+      { x: 88, amp: 6, periodo: 45, y: 8, passo: 4 },
+    ];
+    const outros = [0, 1, 2].filter((i) => i !== e.jogador);
+    outros.forEach((i, n) => {
+      const l = lugares[n];
+      const dx = reduzir ? 0 : Math.sin(T / l.periodo + n) * l.amp;
+      astronauta(l.x + dx, chaoY + l.y, e.trajes[i], T / l.passo);
+      balaoHumor(l.x + dx, chaoY + l.y, e.humores[i]);
+    });
+    // O jogador por cima, com uma setinha amarela na cabeça
+    astronauta(P.x - 3, P.y, e.trajes[e.jogador], P.andando ? P.passo : 0);
+    if (e.humores[e.jogador] === "feliz") { R(P.x - 1, P.y - 14, 3, 1, "#ffd24a"); R(P.x, P.y - 13, 1, 1, "#ffd24a"); }
+    balaoHumor(P.x - 3, P.y, e.humores[e.jogador]);
   }
 
   // ---------- Cenário: BASE EM MARTE ----------
