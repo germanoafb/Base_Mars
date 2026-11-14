@@ -18,6 +18,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Press+Start+2P&family=Tiny5+Duo&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="static/styles/style.css">
+  <link rel="stylesheet" href="static/styles/tutorial.css">
 </head>
 
 <body>
@@ -66,6 +67,9 @@
     </div>
 
     <div class="topo-botoes">
+      <!-- Botão de ajuda: abre o tutorial do jogo -->
+      <button class="btn-idioma btn-tut" type="button" data-tut="abrir" data-i18n-aria="tut_abrir" aria-label="Como jogar / How to play">?</button>
+
       <!-- Botão de som: o main.js liga e desliga -->
       <button class="btn-idioma btn-som" type="button" data-a="mute" aria-label="Desligar o som / Sound off" aria-pressed="false">♪</button>
 
@@ -113,6 +117,7 @@
   <script src="static/js/game/outpost.js" defer></script>
   <script src="static/js/mapa.js" defer></script>
   <script src="static/js/main.js" defer></script>
+  <script src="static/js/tutorial.js" defer></script>
   <!--
     SOM DO JOGO (tudo aqui mesmo, sem arquivo extra e sem mexer no main.js).
     - Efeitos (bipes): gerados por código.

@@ -1,0 +1,424 @@
+/* =========================================================
+TUTORIAL COM O ORBI (usa as cores e peças de style.css)
+   Tela cheia por cima do jogo. Mobile-first.
+   Vê static/js/tutorial.js para o roteiro dos 7 passos.
+   ========================================================= */
+
+.tut-aberto { overflow: hidden; }
+
+.tut {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  padding: 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background-color: rgba(10, 4, 6, .96);
+  background-image:
+    linear-gradient(#ffe9d6, #ffe9d6), linear-gradient(#ffe9d6, #ffe9d6), linear-gradient(#c9a08c, #c9a08c),
+    linear-gradient(#ffe9d6, #ffe9d6), linear-gradient(#c9a08c, #c9a08c), linear-gradient(#ffe9d6, #ffe9d6);
+  background-size: 3px 3px, 2px 2px, 2px 2px, 3px 3px, 2px 2px, 2px 2px;
+  background-repeat: no-repeat;
+  background-position: 8% 12%, 82% 9%, 30% 42%, 92% 58%, 12% 86%, 66% 92%;
+}
+
+.tut-caixa {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: var(--cartao);
+  border: var(--borda) solid var(--acento);
+  box-shadow: 6px 6px 0 var(--sombra);
+  animation: entrar .25s steps(4);
+}
+
+
+/* ---------- Topo: estrelinhas de progresso + idioma + voz ---------- */
+.tut-topo { display: flex; align-items: center; gap: 8px; }
+.tut-topo--inicio { justify-content: flex-end; }
+.tut-topo .btn-idioma { min-height: 44px; min-width: 44px; padding: 0 10px; }
+
+.tut-progresso { list-style: none; display: flex; gap: 4px; flex: 1; min-width: 0; }
+.tut-prog-estrela { width: 18px; height: 18px; color: var(--linha); }
+.tut-prog--feito { color: var(--energia); }
+.tut-prog--atual { color: var(--acento); transform: scale(1.35); }
+
+.tut-voz[aria-pressed="false"] { color: var(--ruim); }
+
+
+/* ---------- Orbi (o robô) ---------- */
+.orbi {
+  position: relative;
+  flex: 0 0 auto;
+  width: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.orbi-svg {
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 10px rgba(46, 230, 200, .35));
+  animation: orbi-flutuar 1.6s steps(2) infinite;
+}
+
+.orbi-nome {
+  padding: 2px 8px;
+  font: .55rem var(--fonte-titulo);
+  letter-spacing: .12em;
+  color: #2ee6c8;
+  background: var(--fundo);
+  border: 2px solid #2ee6c8;
+}
+
+/* O rosto muda conforme o humor (data-humor). Sem o atributo = "normal". */
+.orbi .o-olhos { display: none; }
+.orbi .o-olhos--normal { display: inline; }
+.orbi[data-humor="feliz"] .o-olhos--normal,
+.orbi[data-humor="surpreso"] .o-olhos--normal,
+.orbi[data-humor="piscar"] .o-olhos--normal { display: none; }
+.orbi[data-humor="feliz"] .o-olhos--feliz,
+.orbi[data-humor="surpreso"] .o-olhos--surpreso,
+.orbi[data-humor="piscar"] .o-olhos--piscar { display: inline; }
+
+/* Boca: fechada, ou aberta e fechando quando o Orbi fala */
+.orbi .o-boca--aberta { display: none; }
+.orbi--falando .o-boca--fechada { animation: orbi-boca-fechada .32s steps(1) infinite; }
+.orbi--falando .o-boca--aberta { display: inline; animation: orbi-boca-aberta .32s steps(1) infinite; }
+.orbi[data-humor="surpreso"] .o-boca--fechada { display: none; }
+.orbi[data-humor="surpreso"] .o-boca--aberta { display: inline; }
+
+/* Antena piscando, chama do propulsor tremendo, braço acenando */
+.orbi .o-antena { animation: orbi-antena 1s steps(1) infinite; }
+.orbi .o-chama { animation: orbi-chama .3s steps(1) infinite; }
+.orbi .o-chama--grande { animation-delay: .15s; }
+.orbi .o-braco { transform-box: fill-box; transform-origin: 20% 10%; animation: orbi-acenar 1.2s steps(2) infinite; }
+.orbi--falando .o-braco { animation-duration: .6s; }
+
+.orbi--grande { width: 168px; align-self: center; }
+.orbi--grande .orbi-nome { font-size: .7rem; }
+
+@keyframes orbi-flutuar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes orbi-boca-fechada { 0% { visibility: visible; } 50% { visibility: hidden; } }
+@keyframes orbi-boca-aberta { 0% { visibility: hidden; } 50% { visibility: visible; } }
+@keyframes orbi-antena { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@keyframes orbi-chama { 0% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes orbi-acenar { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-22deg); } }
+/* No estado normal o braço só acena quando o Orbi está feliz ou falando */
+.orbi[data-humor="normal"]:not(.orbi--falando) .o-braco,
+.orbi[data-humor="surpreso"]:not(.orbi--falando) .o-braco { animation: none; }
+
+
+/* ---------- Boas-vindas ---------- */
+.tut-caixa--inicio { align-items: center; text-align: center; max-width: 520px; }
+.tut-papel { font: .6rem/1.6 var(--fonte-titulo); color: #2ee6c8; text-transform: uppercase; }
+.tut-titulo-grande { font-size: 1rem; color: var(--acento); }
+.tut-lead { max-width: 36ch; }
+.tut-caixa--inicio .btn-principal { max-width: 380px; }
+
+.tut-pular {
+  min-height: 44px;
+  padding: 6px 12px;
+  font: 700 1rem var(--fonte-texto);
+  color: var(--texto-suave);
+  background: none;
+  border: 0;
+  text-decoration: underline 2px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+  align-self: center;
+}
+.tut-pular:hover { color: var(--texto); }
+
+
+/* ---------- Cena: Orbi + balão de fala ---------- */
+.tut-cena { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.tut-cena .orbi { width: 72px; }
+
+.tut-balao {
+  position: relative;
+  width: 100%;
+  padding: 10px 12px 12px;
+  color: var(--fundo);
+  background: var(--texto);
+  border: 3px solid var(--sombra);
+  box-shadow: 4px 4px 0 var(--sombra);
+  cursor: default;
+}
+
+/* Ponta do balão apontando para o Orbi (em cima, no celular) */
+.tut-balao::before {
+  content: "";
+  position: absolute;
+  left: 28px;
+  top: -12px;
+  width: 12px;
+  height: 10px;
+  background: var(--texto);
+  border: 3px solid var(--sombra);
+  border-bottom: 0;
+}
+
+.tut-titulo {
+  margin-bottom: 6px;
+  font-size: .75rem;
+  line-height: 1.6;
+  color: var(--acento-escuro);
+}
+.tut-titulo:focus { outline: none; }
+
+.tut-texto { position: relative; font-size: 1.1rem; line-height: 1.4; overflow-wrap: break-word; }
+.tut-fantasma { display: block; visibility: hidden; }
+.tut-digitado { position: absolute; inset: 0 auto auto 0; width: 100%; }
+
+.tut-dica { min-height: 1.2em; font-size: .95rem; text-align: center; color: var(--energia); }
+.tut-dica:empty { display: none; }
+
+
+/* ---------- Palco: a mini-atividade de cada passo ---------- */
+.tut-palco {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 150px;
+  padding: 10px;
+  background: var(--fundo);
+  border: 3px solid var(--linha);
+}
+
+.tut-palco .painel { box-shadow: none; border-width: 3px; }
+.tut-palco .evento { animation: none; }
+.tut-palco .btn-escolha:focus-visible { outline-offset: 2px; }
+
+
+/* ---------- Rodapé: voltar / ouvir de novo / próximo ---------- */
+.tut-rodape {
+  position: sticky;
+  bottom: -12px;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 8px;
+  margin: 0 -12px;
+  padding: 10px 12px 12px;
+  background: var(--cartao);
+  border-top: 3px solid var(--linha);
+}
+.tut-rodape .btn { width: auto; padding: 10px 14px; font-size: .7rem; }
+.tut-rodape .btn-principal { width: 100%; }
+.tut-repetir { min-width: 56px; font-size: 1.2rem !important; }
+.tut-rodape .btn:disabled { opacity: .35; cursor: not-allowed; }
+
+
+/* ---------- Passo 1: Terra → Marte + tripulação ---------- */
+.tut-viagem { display: flex; align-items: center; gap: 10px; }
+.tut-ponta { display: flex; flex-direction: column; align-items: center; gap: 4px; font: .55rem var(--fonte-titulo); }
+.tut-planeta { width: 52px; height: 52px; image-rendering: pixelated; }
+
+.tut-trilha {
+  position: relative;
+  flex: 1;
+  height: 40px;
+  background: repeating-linear-gradient(90deg, var(--linha) 0 6px, transparent 6px 14px) center / 100% 4px no-repeat;
+}
+.tut-nave { position: absolute; top: 4px; left: 0; width: 56px; height: 32px; animation: tut-viajar 3.2s steps(16) infinite alternate; }
+.tut-nave-ico { width: 100%; height: 100%; }
+@keyframes tut-viajar { from { left: 0; } to { left: calc(100% - 56px); } }
+
+.tut-crew { list-style: none; display: flex; justify-content: center; gap: 14px; }
+.tut-crew .rosto-svg { width: 52px; height: 52px; }
+.tut-crew .rosto { font-size: .6rem; gap: 4px; }
+
+
+/* ---------- Passo 2: toque no Sol ---------- */
+.tut-energia { display: flex; align-items: center; gap: 14px; }
+
+.tut-sol {
+  position: relative;
+  flex: 0 0 auto;
+  width: 112px;
+  height: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--energia);
+  background: var(--cartao);
+  border: var(--borda) solid var(--energia);
+  box-shadow: var(--bloco);
+  cursor: pointer;
+  animation: chamar 1s steps(2) infinite;
+}
+.tut-sol:active { transform: translate(4px, 4px); box-shadow: none; }
+.tut-sol:disabled { animation: none; opacity: .6; cursor: default; }
+.tut-sol-ico { width: 56px; height: 56px; }
+.tut-toque { font: .6rem var(--fonte-titulo); color: var(--texto); }
+.tut-sol:disabled .tut-toque { visibility: hidden; }
+
+.tut-energia-lado { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.tut-raios { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; max-width: 200px; }
+.tut-raio-caixa { display: grid; place-items: center; padding: 2px; background: #000; border: 2px solid var(--linha); }
+.tut-raio { width: 26px; height: 26px; color: var(--linha); }
+.tut-raio-caixa.on { border-color: var(--energia); }
+.tut-raio-caixa.on .tut-raio { color: var(--energia); animation: pular .25s steps(3); }
+.tut-contagem { font: .65rem var(--fonte-titulo); color: var(--energia); }
+.tut-bateria { display: flex; align-items: center; gap: 6px; font-size: 1rem; color: var(--texto-suave); }
+.tut-bateria .ico { width: 1.2em; height: 1.2em; color: var(--energia); }
+
+
+/* ---------- Passo 3: os 4 sistemas ---------- */
+.tut-sistemas { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.tut-sis {
+  position: relative;
+  width: 100%;
+  min-height: 92px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font: 700 1rem var(--fonte-texto);
+  color: var(--texto);
+  background: var(--cartao);
+  border: 3px solid var(--linha);
+  border-top: 6px solid var(--cor);
+  box-shadow: 3px 3px 0 var(--sombra);
+  cursor: pointer;
+}
+.tut-sis:hover { border-color: var(--cor); }
+.tut-sis:active { transform: translate(3px, 3px); box-shadow: none; }
+.tut-sis-ico { width: 40px; height: 40px; color: var(--cor); }
+.tut-sis-ok { position: absolute; top: 4px; right: 6px; display: none; font: .9rem var(--fonte-titulo); color: var(--bom); }
+.tut-sis--visto { border-color: var(--cor); background: var(--cartao-2); }
+.tut-sis--visto .tut-sis-ok { display: block; }
+
+
+/* ---------- Passo 4: treino (usa .painel, .sistema, .barra do jogo) ---------- */
+.tut-painel .sistemas { gap: 8px; }
+
+
+/* ---------- Passo 5: a carta ---------- */
+.tut-carta { background: var(--cartao); padding: 10px; }
+.tut-carta .evento-titulo { font-size: .7rem; }
+.tut-carta p { font-size: 1rem; }
+.tut-carta .btn-escolha { min-height: 52px; }
+/* No celular o ícone grande da carta sai para sobrar espaço para as 2 opções */
+@media (max-width: 559px) { .tut-carta > .ico { display: none; } }
+
+
+/* ---------- Passo 6: tempestade solar e escudo ---------- */
+.tut-tempestade {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 10px;
+  min-height: 92px;
+  background: #0b0710;
+  border: 3px solid var(--linha);
+  overflow: hidden;
+}
+.tut-flare { width: 56px; height: 56px; color: var(--energia); animation: pular .8s steps(4) infinite alternate; }
+.tut-raiosx { flex: 1; display: flex; justify-content: space-around; font: 1.2rem var(--fonte-titulo); color: var(--radiacao); }
+.tut-raiosx span { animation: tut-raio .9s steps(3) infinite; }
+.tut-raiosx span:nth-child(2) { animation-delay: .3s; }
+.tut-raiosx span:nth-child(3) { animation-delay: .6s; }
+@keyframes tut-raio { 0% { opacity: .2; transform: translateX(-6px); } 100% { opacity: 1; transform: translateX(6px); } }
+
+.tut-muro {
+  width: 10px;
+  height: 72px;
+  margin-right: 6px;
+  background: repeating-linear-gradient(180deg, var(--escudo) 0 10px, transparent 10px 14px);
+  opacity: 0;
+}
+.tut-nave2 { width: 72px; height: 36px; }
+
+.tut-tempestade--escudo .tut-muro { opacity: 1; box-shadow: 0 0 0 2px var(--escudo); }
+.tut-tempestade--escudo .tut-raiosx { opacity: .35; }
+.tut-tempestade--escudo .tut-raiosx span { animation-play-state: paused; }
+
+.tut-btn-escudo { color: var(--escudo); border-color: var(--escudo); animation: chamar 1s steps(2) infinite; }
+.tut-btn-escudo .ico { width: 1.6em; height: 1.6em; }
+.tut-btn-escudo span { color: var(--texto); }
+.tut-btn-escudo--on { animation: none; background: var(--cartao-2); }
+.tut-dose { color: var(--radiacao); }
+
+
+/* ---------- Passo 7: meta e estrelas ---------- */
+.tut-meta { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tut-meta li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  text-align: center;
+  background: var(--cartao);
+  border: 3px solid var(--linha);
+}
+.tut-meta .ico { color: var(--energia); width: 1.6em; height: 1.6em; }
+.tut-meta b { font: 1rem var(--fonte-titulo); color: var(--texto); }
+.tut-meta span { font-size: .9rem; line-height: 1.2; color: var(--texto-suave); }
+
+.tut-estrelas { display: flex; justify-content: center; gap: 10px; }
+.tut-estrela { width: 48px; height: 48px; color: var(--energia); animation: pular .5s steps(4) both; }
+.tut-estrela:nth-child(2) { animation-delay: .25s; }
+.tut-estrela:nth-child(3) { animation-delay: .5s; }
+
+
+/* ---------- Celular: Orbi menor e sem plaquinha, para sobrar espaço ao palco ---------- */
+@media (max-width: 559px) {
+  .tut-cena { gap: 8px; }
+  .tut-cena .orbi { width: 60px; }
+  .tut-cena .orbi-nome { display: none; }
+  .tut-balao::before { left: 22px; }
+  .tut-palco { min-height: 0; }
+}
+
+/* ---------- Telas maiores: Orbi ao lado do balão ---------- */
+@media (min-width: 560px) {
+  .tut { padding: 20px; }
+  .tut-caixa { padding: 16px; gap: 14px; }
+  .tut-rodape { margin: 0 -16px; padding: 10px 16px 14px; bottom: -16px; }
+  .tut-cena { flex-direction: row; align-items: center; gap: 16px; }
+  .tut-cena .orbi { width: 104px; }
+  .tut-balao { min-height: 7rem; }
+  /* Ponta do balão passa para a esquerda */
+  .tut-balao::before {
+    left: -13px;
+    top: 50%;
+    width: 10px;
+    height: 12px;
+    border: 3px solid var(--sombra);
+    border-right: 0;
+    transform: translateY(-50%);
+  }
+  .tut-texto { font-size: 1.2rem; }
+  .tut-rodape .btn { font-size: .8rem; }
+}
+
+@media (max-width: 380px) {
+  .tut-prog-estrela { width: 15px; height: 15px; }
+  .tut-energia { flex-direction: column; }
+  .tut-raios { max-width: none; }
+}
+
+/* Quem prefere menos movimento: o texto aparece inteiro e nada se mexe (a regra
+   geral de style.css já desliga as animações; aqui só o braço do Orbi parado) */
+@media (prefers-reduced-motion: reduce) {
+  .orbi .o-braco { transform: none; }
+}

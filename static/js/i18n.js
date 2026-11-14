@@ -22,6 +22,7 @@ const TEXTOS = {
     papel_engenheiro: "Engenheiro",
     papel_botanica: "Botânica",
     lancar: "Lançar a nave!",
+    tut_abrir: "Como jogar",
 
     energia_livre: "Energia livre",
     de: "de",
@@ -217,6 +218,65 @@ const TEXTOS = {
     fim_certo_ciencia: "Vocês enviaram {n} pontos de ciência para a Terra. Pensaram como planejadores da NASA!",
     fim_dica_ciencia: "Vocês enviaram {n} de {meta} pontos de ciência. Energia guardada demais é ciência que não foi feita!",
     estrelas_aria: "{n} de 3 estrelas",
+
+    // ---- Tutorial com o Orbi (static/js/tutorial.js) ----
+    // Textos do tutorial são "falados" pela voz do Orbi: frases curtas, sem HTML.
+    tut_abrir: "Como jogar",
+    tut_aria: "Tutorial com o Orbi, o robô-guia",
+    tut_papel: "Robô-guia do Controle da Missão",
+    tut_boasvindas_titulo: "Controle da Missão chamando!",
+    tut_boasvindas_texto: "Conheça o Orbi, o robô que vai ensinar você a jogar em poucos minutos. Ligue o som!",
+    tut_comecar: "Ouvir o Orbi",
+    tut_pular: "Pular tutorial",
+    tut_proximo: "Próximo",
+    tut_voltar: "Voltar",
+    tut_repetir: "Ouvir de novo",
+    tut_repetir_aria: "Ouvir o Orbi de novo",
+    tut_voz_desligar: "Desligar a voz do Orbi",
+    tut_voz_ligar: "Ligar a voz do Orbi",
+    tut_passo: "Passo {n} de {total}",
+    tut_fim_botao: "Começar a missão!",
+    tut_toque: "Toque!",
+    tut_tarefa: "Faça a tarefa do Orbi para continuar.",
+
+    tut1_titulo: "Olá, astronauta!",
+    tut1_texto: "Câmbio! Aqui é o Orbi, do Controle da Missão. Hoje você é o comandante! Vai levar a Lia, o Davi e a Yara até Marte e cuidar da base lá. Bora aprender juntos?",
+
+    tut2_titulo: "Energia é tudo!",
+    tut2_texto: "Tudo na nave funciona com energia! Os painéis solares fazem {energia} de energia por turno. Toque no Sol para recarregar!",
+    tut2_feito: "Isso! Energia cheia. Mas é pouca para tanta coisa! O que sobrar vai para a bateria, que guarda até {bateria} para o próximo turno.",
+    tut2_sol_aria: "Sol: toque para gerar energia",
+    tut2_contagem: "Energia {n} de {total}",
+    tut2_bateria: "Bateria: guarda até {n}",
+
+    tut3_titulo: "Quatro sistemas",
+    tut3_texto: "Quatro sistemas precisam da sua energia. Toque em cada um e eu explico!",
+    tut3_o2: "Ar e água! O suporte de vida recicla a água e tira o oxigênio dela para a tripulação respirar. Sem ele, ninguém respira!",
+    tut3_food: "Comida! Na estufa crescem alfaces e outras plantas. Plantas precisam de luz para crescer, e luz gasta energia.",
+    tut3_shield: "Escudo! Ele protege a tripulação da radiação do Sol e do espaço. Nas tempestades solares, ele é superimportante!",
+    tut3_comms: "Rádio! Ele manda seus estudos para a Terra: cada ponto vira 1 de ciência. Com 2 pontos ou mais, a Terra avisa antes das tempestades!",
+    tut3_feito: "Muito bem! Agora você conhece os quatro sistemas. Hora de treinar!",
+    tut3_ouvido: "já ouvi",
+
+    tut4_titulo: "Hora de treinar!",
+    tut4_texto: "Treino! Você tem {n} pontos de energia. Toque no mais e no menos para dividir entre os sistemas. Use todos os pontos!",
+    tut4_seguro: "Uau! Ar e comida estão seguros. Mas olha: não sobrou nada para o escudo e o rádio. Nenhuma escolha é de graça!",
+    tut4_cai: "O ar ou a comida vão diminuir um pouquinho. Por um turno tudo bem, mas se cair demais fica perigoso! Você decide onde gastar cada ponto.",
+
+    tut5_titulo: "Carta de decisão",
+    tut5_texto: "De vez em quando chega uma carta de decisão. Olha só: tempestade de poeira! Escolha o que a tripulação faz.",
+    tut5_limpar: "Boa! Você ganhou energia, mas o Davi gastou ar lá fora. Toda decisão tem um custo! Não existe resposta perfeita, só a que combina com o seu plano.",
+    tut5_esperar: "Boa! Descansar poupa ar, mas a energia continua pela metade. Toda decisão tem um custo! Não existe resposta perfeita, só a que combina com o seu plano.",
+
+    tut6_titulo: "Tempestade solar!",
+    tut6_texto: "Às vezes o Sol solta uma tempestade solar, cheia de radiação! No jogo elas são de verdade, do arquivo da NASA. Toque no escudo para proteger a tripulação!",
+    tut6_feito: "Isso! Com 3 pontos ou mais no escudo, você bloqueia boa parte da radiação. E com 2 pontos no rádio, a Terra avisa antes!",
+    tut6_escudo: "Ligar o escudo",
+    tut6_escudo_on: "Escudo ligado",
+    tut6_dose: "Radiação da tempestade",
+
+    tut7_titulo: "Sua missão!",
+    tut7_texto: "Sua meta: mandar {meta} pontos de ciência para a Terra e manter todos seguros. São {dias} dias de viagem e {sois} sóis em Marte. Um sol é um dia em Marte! Ninguém perde: no fim você ganha de 1 a 3 estrelas. Toque nas estações do mapa para o personagem andar até lá. Boa sorte, comandante! Câmbio e desligo!",
   },
 
   en: {
@@ -228,6 +288,7 @@ const TEXTOS = {
     papel_engenheiro: "Engineer",
     papel_botanica: "Botanist",
     lancar: "Launch the ship!",
+    tut_abrir: "How to play",
 
     energia_livre: "Free power",
     de: "of",
@@ -423,6 +484,65 @@ const TEXTOS = {
     fim_certo_ciencia: "You sent {n} science points to Earth. You thought like NASA mission planners!",
     fim_dica_ciencia: "You sent {n} of {meta} science points. Too much saved power is science that never happened!",
     estrelas_aria: "{n} of 3 stars",
+
+    // ---- Tutorial with Orbi (static/js/tutorial.js) ----
+    // These texts are "spoken" by Orbi's voice: short sentences, no HTML.
+    tut_abrir: "How to play",
+    tut_aria: "Tutorial with Orbi, the guide robot",
+    tut_papel: "Mission Control guide robot",
+    tut_boasvindas_titulo: "Mission Control calling!",
+    tut_boasvindas_texto: "Meet Orbi, the robot who will teach you how to play in just a few minutes. Turn your sound on!",
+    tut_comecar: "Hear Orbi",
+    tut_pular: "Skip tutorial",
+    tut_proximo: "Next",
+    tut_voltar: "Back",
+    tut_repetir: "Hear again",
+    tut_repetir_aria: "Hear Orbi again",
+    tut_voz_desligar: "Turn off Orbi's voice",
+    tut_voz_ligar: "Turn on Orbi's voice",
+    tut_passo: "Step {n} of {total}",
+    tut_fim_botao: "Start the mission!",
+    tut_toque: "Tap!",
+    tut_tarefa: "Do Orbi's task to continue.",
+
+    tut1_titulo: "Hello, astronaut!",
+    tut1_texto: "Orbi from Mission Control here, over! Today you are the commander! You will take Lia, Davi and Yara to Mars and take care of the base there. Ready to learn together?",
+
+    tut2_titulo: "Power is everything!",
+    tut2_texto: "Everything on the ship runs on power! The solar panels make {energia} power per turn. Tap the Sun to recharge!",
+    tut2_feito: "Yes! Full power. But it is not much for so many things! Whatever is left goes to the battery, which keeps up to {bateria} for the next turn.",
+    tut2_sol_aria: "Sun: tap to make power",
+    tut2_contagem: "Power {n} of {total}",
+    tut2_bateria: "Battery: keeps up to {n}",
+
+    tut3_titulo: "Four systems",
+    tut3_texto: "Four systems need your power. Tap each one and I will explain!",
+    tut3_o2: "Air and water! Life support recycles water and makes oxygen from it so the crew can breathe. Without it, nobody can breathe!",
+    tut3_food: "Food! Lettuce and other plants grow in the greenhouse. Plants need light to grow, and light uses power.",
+    tut3_shield: "Shield! It protects the crew from radiation from the Sun and from space. During solar storms, it is super important!",
+    tut3_comms: "Radio! It sends your studies to Earth: each point becomes 1 science. With 2 points or more, Earth warns you before storms!",
+    tut3_feito: "Great job! Now you know the four systems. Time to practice!",
+    tut3_ouvido: "heard",
+
+    tut4_titulo: "Time to practice!",
+    tut4_texto: "Practice time! You have {n} power points. Tap plus and minus to share them between the systems. Use all the points!",
+    tut4_seguro: "Wow! Air and food are safe. But look: nothing is left for the shield and the radio. Every choice has a cost!",
+    tut4_cai: "Air or food will go down a little. One turn is fine, but if it drops too much it gets dangerous! You decide where each point goes.",
+
+    tut5_titulo: "Decision card",
+    tut5_texto: "Now and then a decision card shows up. Look: a dust storm! Pick what the crew does.",
+    tut5_limpar: "Nice! You got extra power, but Davi used up air outside. Every decision has a cost! There is no perfect answer, only the one that fits your plan.",
+    tut5_esperar: "Nice! Resting saves air, but power stays cut in half. Every decision has a cost! There is no perfect answer, only the one that fits your plan.",
+
+    tut6_titulo: "Solar storm!",
+    tut6_texto: "Sometimes the Sun throws a solar storm, full of radiation! In the game they are real ones, from the NASA archive. Tap the shield to protect the crew!",
+    tut6_feito: "Yes! With 3 points or more on the shield, you block a big part of the radiation. And with 2 points on the radio, Earth warns you first!",
+    tut6_escudo: "Turn on the shield",
+    tut6_escudo_on: "Shield on",
+    tut6_dose: "Storm radiation",
+
+    tut7_titulo: "Your mission!",
+    tut7_texto: "Your goal: send {meta} science points to Earth and keep everyone safe. That is {dias} days of travel and {sois} sols on Mars. A sol is one day on Mars! Nobody loses: at the end you get 1 to 3 stars. Tap the stations on the map and your character walks there. Good luck, commander! Over and out!",
   },
 };
 

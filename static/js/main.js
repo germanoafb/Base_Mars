@@ -546,6 +546,9 @@
     }
   });
 
+  // O tutorial (tutorial.js) reaproveita os rostos da tripulação e redesenha o jogo ao trocar de idioma
+  window.ARES.tela = { rosto, TRIPULACAO, redesenhar: () => desenhar({ quieto: true }) };
+
   // ---------- Início ----------
   mudarIdioma(idiomaInicial());
   desenhar();
