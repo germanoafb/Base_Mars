@@ -6,3 +6,5 @@ Não fazem parte do jogo: rodam só quando precisamos atualizar os dados
 (no seu computador ou, no futuro, num GitHub Action diário).
 
 Dependências: `pip install -r scripts/requirements.txt`
+
+Configuração: copie `.env.example` para `.env` e coloque sua chave da NASA em `NASA_API_KEY`.
