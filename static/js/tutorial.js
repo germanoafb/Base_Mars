@@ -167,10 +167,12 @@
     if (!grupo.length) return null;
 
     const nomes = en
-      ? /(google|samantha|susan|ava|jenny|female|natural|aria|daniel)/i
-      : /(google|luciana|fernanda|maria|vit[oó]ria|samantha|aria|daniel|nat[aá]lia|female|natural)/i;
+      ? /(samantha|susan|ava|jenny|nora|zoe|female|natural|aria|daniel)/i
+      : /(luciana|fernanda|maria|vit[oó]ria|samantha|julia|leila|rosa|nat[aá]lia|female|natural|aria|daniel)/i;
 
-    return grupo.find((v) => nomes.test(v.name)) || grupo.find((v) => /pt|br|brazil/i.test(v.lang)) || grupo[0];
+    const local = grupo.filter((v) => v.localService !== false);
+    const favorita = (local.length ? local : grupo).find((v) => nomes.test(v.name) && /natural|female|voice|voice/i.test(v.name + " " + v.lang));
+    return favorita || (local.length ? local[0] : grupo[0]);
   }
 
   function pararFala() {
@@ -226,9 +228,9 @@
       const emPt = idiomaAtual() !== "en";
       u.lang = emPt ? "pt-BR" : "en-US";
       if (v) { try { u.voice = v; u.lang = v.lang; } catch (e) { /* voz estranha: usa a padrão do idioma */ } }
-      u.pitch = emPt ? 1.08 : 1.12;
-      u.rate = emPt ? 0.9 : 0.95;
-      u.volume = 1;
+      u.pitch = emPt ? 1.08 : 1.04;
+      u.rate = emPt ? 0.98 : 0.96;
+      u.volume = 0.94;
       u.onstart = () => { comecou = true; };
       u.onend = proxima;
       u.onerror = proxima;
