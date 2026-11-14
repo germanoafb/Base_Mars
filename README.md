@@ -9,6 +9,7 @@ Jogo em pixel art para crianças de 7 a 12 anos, em português e inglês. A Lia 
 - Divida a energia entre **ar e água**, **estufa**, **escudo** e **rádio**. Cada ponto no rádio envia 1 ponto de **ciência** (meta: 30) e, com 2 ou mais, a Terra avisa das tempestades solares.
 - Eventos chegam como **cartas de decisão** com duas opções, e as duas custam algo.
 - Fim sem castigo: debriefing com o que deu certo e o que melhorar, de 1 a 3 estrelas.
+- **Nome e certificado:** o jogador digita o nome antes de lançar a nave. Quem chega ao fim da missão (2 ou 3 estrelas) ganha um certificado em PNG com o nome, o logo do jogo e o logo da NASA (arquivo em `static/assets/nasa-logo.png`).
 
 Os números ficam em `CONFIG`, no começo de `static/js/game/outpost.js`.
 
@@ -31,6 +32,7 @@ Base_Mars/
 │   │   ├── i18n.js           ← todos os textos em PT e EN
 │   │   ├── mapa.js           ← mapa em pixel art (canvas): a Lia anda até as estações
 │   │   ├── main.js           ← TELA: telas, botões, cartas, tripulação
+│   │   ├── certificado.js    ← desenha o certificado (canvas) e baixa o PNG
 │   │   └── game/             ← REGRAS do jogo (JS puro, sem mexer na tela)
 │   │       ├── outpost.js    ← estado da missão, bateria, ciência e cada turno
 │   │       ├── events.js     ← eventos e cartas de decisão

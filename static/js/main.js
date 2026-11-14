@@ -7,7 +7,7 @@
 //   esquerda = mapa (com placar por cima) + tripulação
 //   direita  = energia, 4 sistemas, 3 barras e o botão "Próximo"
 //
-// Ordem dos scripts no index.html: i18n.js → dados → game/*.js → mapa.js → minigames.js → main.js
+// Ordem dos scripts no index.html: i18n.js → dados → game/*.js → mapa.js → minigames.js → certificado.js → main.js
 
 (function () {
   "use strict";
@@ -22,7 +22,13 @@
   //   jogador      = índice do personagem escolhido (0 Lia, 1 Davi, 2 Yara)
   //   estacao      = estação do mapa onde o personagem está
   //   recemAvancou = acabou de passar o turno (a fala mostra o diário)
-  const ui = { tela: "lancamento", jogo: null, estacao: null, jogador: 0, recemAvancou: false };
+  const ui = { tela: "lancamento", jogo: null, estacao: null, jogador: 0, recemAvancou: false, nome: "", nomeErro: false, certificado: null };
+
+  // Nome do jogador: vai no certificado do fim da missão. Fica salvo só neste aparelho.
+  const CHAVE_NOME = "ares_nome";
+  const NOME_MAX = 24;
+  const limparNome = (s) => String(s || "").replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim().slice(0, NOME_MAX);
+  try { ui.nome = limparNome(localStorage.getItem(CHAVE_NOME)); } catch (e) { ui.nome = ""; }
 
   // Tripulação: cor da pele, do cabelo e do traje (o mesmo do mapa)
   const TRIPULACAO = [
@@ -118,6 +124,17 @@
     return `<svg class="rosto-svg" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${px.join("")}</svg>`;
   }
 
+  // ---------- Campo de nome (tela de lançamento) ----------
+  function campoNome() {
+    const erro = ui.nomeErro;
+    return `
+        <div class="campo-nome${erro ? " campo-nome--erro" : ""}">
+          <label class="campo-nome-rotulo" for="nome-jogador">${t("nome_rotulo")}</label>
+          <input class="campo-nome-input" id="nome-jogador" type="text" maxlength="${NOME_MAX}" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" aria-required="true" aria-describedby="nome-dica" placeholder="${esc(t("nome_placeholder"))}" value="${esc(ui.nome)}"${erro ? ' aria-invalid="true"' : ""}>
+          <p class="campo-nome-dica${erro ? " campo-nome-dica--erro" : ""}" id="nome-dica"${erro ? ' role="alert"' : ""}>${t(erro ? "nome_erro" : "nome_dica")}</p>
+        </div>`;
+  }
+
   // ---------- TELA 1: lançamento + escolha do personagem ----------
   function telaLancamento() {
     const astronautas = TRIPULACAO.map((a, i) => {
@@ -140,6 +157,7 @@
         <h1 id="t-tela" tabindex="-1">${t("lanc_titulo")}</h1>
         <p class="lead">${t("lanc_lead")}</p>
         <p class="explica">${t("lanc_regras", { dias: C.viagem.turnos * C.viagem.diasPorTurno, sois: C.base.sois, energia: C.energiaPorTurno, meta: C.metaCiencia })}</p>
+        ${campoNome()}
         <h2 class="subtitulo">${t("escolha_personagem")}</h2>
         <ul class="tripulacao">${astronautas}</ul>
         <button class="btn btn-principal" type="button" data-a="next">${ico("i-ship")} ${t("lancar")}</button>
@@ -407,6 +425,39 @@
     </section>`;
   }
 
+  // ---------- Certificado do fim da missão ----------
+  // Quem cumpriu a missão (2 ou 3 estrelas) ganha o certificado; o desenho fica em certificado.js.
+  function certificadoHtml(r, estrelas) {
+    if (r.resultado === "cedo") {
+      ui.certificado = null;
+      return `<p class="explica cert-sem">${t("cert_sem")}</p>`;
+    }
+    const nome = limparNome(ui.nome) || jogador().nome;
+    const slug = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "comandante";
+    const data = new Intl.DateTimeFormat(local(), { day: "numeric", month: "long", year: "numeric" }).format(new Date());
+    ui.certificado = {
+      nome,
+      estrelas,
+      arquivo: `certificado-projeto-ares-${slug}`,
+      textos: {
+        titulo: t("cert_titulo"),
+        parabens: t("cert_parabens"),
+        texto: t("cert_texto_" + r.resultado, { ciencia: r.ciencia }),
+        detalhes: t("cert_detalhes", { dias: r.dias, sois: r.sois, ciencia: r.ciencia }),
+        data: t("cert_data", { data }),
+        aviso: t("cert_aviso"),
+        credito: t("cert_credito"),
+        nasa: t("cert_nasa_texto"),
+      },
+    };
+    return `
+      <div class="cert">
+        <h2 class="cert-titulo">${ico("i-star")} ${t("cert_secao", { nome: esc(nome) })}</h2>
+        <canvas class="cert-canvas" id="cert-canvas" role="img" aria-label="${esc(t("cert_aria", { nome }))}"></canvas>
+        <button class="btn btn-principal" type="button" data-a="cert-baixar">${t("cert_baixar")}</button>
+      </div>`;
+  }
+
   // ---------- TELA 5: debriefing (3 finais, nenhum é castigo) ----------
   function telaFim(e) {
     const r = J.avaliar(e);
@@ -437,6 +488,7 @@
         <li>${ico("i-check")}<b>3</b> ${t("resumo_seguros")}</li>
       </ul>
       <p class="explica">${t("fim_comparacao", { dose: mSv(r.rad), anos: r.anosNaTerra })}</p>
+      ${certificadoHtml(r, estrelas)}
       <div class="debrief debrief--certo">
         <h2>${ico("i-check")} ${t("deu_certo")}</h2>
         <ul>${lista(r.certo)}</ul>
@@ -498,6 +550,12 @@
     const canvas = app.querySelector("#mapa");
     if (MAPA) MAPA.conectar(canvas, estadoDoMapa, chegouNaEstacao);
 
+    // Fim da missão: desenha o certificado no canvas (certificado.js)
+    if (ui.tela === "fim" && ui.certificado && window.ARES.certificado) {
+      const cv = app.querySelector("#cert-canvas");
+      if (cv) window.ARES.certificado.desenhar(cv, ui.certificado);
+    }
+
     if (foco === "titulo") {
       window.scrollTo(0, 0);
       // Se tem carta de decisão, o foco vai direto para a primeira opção
@@ -530,6 +588,14 @@
       desenhar({ quieto: true, foco: `[data-a="pick"][data-i="${ui.jogador}"]` });
     } else if (acao === "next") {
       if (ui.tela === "lancamento") {
+        if (!limparNome(ui.nome)) {                 // sem nome não decola: o nome vai no certificado
+          ui.nomeErro = true;
+          desenhar({ quieto: true, foco: "#nome-jogador" });
+          return;
+        }
+        ui.nome = limparNome(ui.nome);
+        ui.nomeErro = false;
+        try { localStorage.setItem(CHAVE_NOME, ui.nome); } catch (e) { /* sem armazenamento: tudo bem */ }
         ui.jogo = J.criarJogo();
         ui.tela = "jogo";
         ui.recemAvancou = false;
@@ -567,6 +633,9 @@
       } else {
         concluir(null);
       }
+    } else if (acao === "cert-baixar") {
+      const cv = app.querySelector("#cert-canvas");
+      if (cv && ui.certificado && window.ARES.certificado) window.ARES.certificado.baixar(cv, ui.certificado);
     } else if (acao === "log") {
       ui.tela = "diario";
       desenhar({ foco: "titulo" });
@@ -575,10 +644,40 @@
       desenhar({ foco: "titulo" });
     } else if (acao === "restart") {
       ui.jogo = null;
+      ui.certificado = null;
       ui.tela = "lancamento";
       ui.estacao = null;
       desenhar({ foco: "titulo" });
     }
+  });
+
+  // Digitar o nome: guarda o que foi escrito (sem redesenhar a tela, para não perder o foco)
+  document.addEventListener("input", (evento) => {
+    const campo = evento.target;
+    if (!campo || campo.id !== "nome-jogador") return;
+    ui.nome = campo.value.slice(0, NOME_MAX);
+    if (ui.nomeErro && limparNome(ui.nome)) {
+      ui.nomeErro = false;
+      const caixa = campo.closest(".campo-nome");
+      if (caixa) {
+        caixa.classList.remove("campo-nome--erro");
+        campo.removeAttribute("aria-invalid");
+        const dica = caixa.querySelector(".campo-nome-dica");
+        if (dica) {
+          dica.classList.remove("campo-nome-dica--erro");
+          dica.removeAttribute("role");
+          dica.textContent = t("nome_dica");
+        }
+      }
+    }
+  });
+
+  // Enter no campo de nome = lançar a nave
+  document.addEventListener("keydown", (evento) => {
+    if (evento.key !== "Enter" || !evento.target || evento.target.id !== "nome-jogador") return;
+    evento.preventDefault();
+    const lancar = app.querySelector('.tela--lancamento [data-a="next"]');
+    if (lancar) lancar.click();
   });
 
   // O tutorial (tutorial.js) reaproveita os rostos da tripulação e redesenha o jogo ao trocar de idioma
