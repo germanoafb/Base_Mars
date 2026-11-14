@@ -159,7 +159,8 @@ a { color: var(--o2); }
 /* Nome do jogo com a fonte pixelada escolhida pela equipe */
 .marca-nome {
   font-family: var(--fonte-logo);
-  font-size: 1.6rem;
+  font-size: clamp(1.25rem, 5.5vw, 1.6rem);
+  white-space: nowrap;
   line-height: 1;
   color: var(--marte);
   letter-spacing: .02em;
@@ -206,7 +207,8 @@ html[lang="en"] .btn-idioma .idioma-en {
 
 /* Ao mexer nos botões − e +, a tela é redesenhada sem animar de novo */
 .sem-animacao,
-.sem-animacao .evento { animation: none; }
+.sem-animacao .evento,
+.sem-animacao .rosto-svg { animation: none; }
 
 /* Cada tela: coluna centralizada com espaço entre as partes */
 .tela {
@@ -775,6 +777,220 @@ html[lang="en"] .btn-idioma .idioma-en {
 .rodape-credito { margin-top: 10px; }
 
 
+/* ---------- 13b. CENA, TRIPULAÇÃO VIVA E CARTAS DE DECISÃO ---------- */
+
+/* Texto só para leitor de tela (não aparece na tela) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Cartão da cena (nave ou base) */
+.cena {
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(32, 36, 90, .7), rgba(32, 36, 90, .25));
+  border: 2px solid var(--cartao-borda);
+  border-radius: var(--raio);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cena .mapa-titulo { margin-bottom: 0; }
+
+/* Desenho grande que muda com o jogo */
+.cena-jogo {
+  width: 100%;
+  height: auto;
+  border-radius: var(--raio-pequeno);
+  background: radial-gradient(ellipse at 50% 50%, #1d2160, #0b0d2a 75%);
+}
+
+.cena-jogo--base { background: #e9a27a; }
+
+/* Em telas grandes a cena não passa de 640px de largura */
+.cena-jogo { max-width: 640px; align-self: center; }
+
+.cena-escudo { transition: opacity .3s ease; }
+
+/* Nave flutuando de leve */
+.cena-nave { animation: boiar 4s ease-in-out infinite; }
+
+/* Luz vermelha de alarme quando o ar está acabando */
+.cena-alarme { animation: piscar 1s steps(2, jump-none) infinite; }
+
+/* Ondas do rádio */
+.cena-ondas path { animation: onda 1.6s ease-out infinite; }
+
+/* Tempestade solar: tela pulsando em rosa/roxo */
+.cena-tempestade { opacity: .18; animation: pulsar 1.2s ease-in-out infinite; }
+.cena-raios { animation: piscar 0.8s steps(2, jump-none) infinite; }
+
+/* Poeira soprando */
+.cena-poeira { animation: soprar 5s linear infinite; }
+
+/* Mini trilha Terra → Marte embaixo da cena */
+.mapa-ponto {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+.mapa-ponto--terra { background: var(--terra); }
+.mapa-ponto--marte { background: var(--marte); }
+
+/* Tripulação: rostos + balão de fala */
+.tripulacao-viva {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rostos {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.rosto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-weight: 800;
+  font-size: .9rem;
+}
+
+.rosto-svg {
+  width: 56px;
+  height: 56px;
+  transition: transform .2s ease;
+}
+
+/* Quem está falando fica um pouco maior, com anel amarelo */
+.rosto--falando .rosto-svg {
+  transform: scale(1.12);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px var(--energia);
+}
+
+.rosto--assustado .rosto-svg { animation: tremer .4s ease-in-out 2; }
+
+/* Balão de fala com ponta apontando para quem fala */
+.fala {
+  position: relative;
+  padding: 10px 14px;
+  background: var(--texto);
+  color: var(--fundo);
+  border-radius: var(--raio-pequeno);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.fala::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: var(--ponta, 50%);
+  border: 8px solid transparent;
+  border-top: 0;
+  border-bottom-color: var(--texto);
+  transform: translateX(-50%);
+}
+
+.fala--0 { --ponta: calc(50% - 72px); }
+.fala--1 { --ponta: 50%; }
+.fala--2 { --ponta: calc(50% + 72px); }
+
+/* Cores dos eventos novos */
+.evento--filtro { --cor: var(--o2); }
+.evento--praga  { --cor: var(--comida); }
+
+.evento-corpo { flex: 1; min-width: 0; }
+
+.evento-pergunta {
+  margin-top: 8px;
+  font-weight: 800;
+}
+
+/* Botões da carta de decisão */
+.escolhas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-escolha {
+  min-height: 56px;
+  width: 100%;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  font: 700 1rem var(--fonte-texto);
+  color: var(--texto);
+  background: var(--fundo);
+  border: 3px solid var(--cartao-borda);
+  border-radius: var(--raio-pequeno);
+  cursor: pointer;
+  transition: border-color .15s ease, transform .1s ease;
+}
+
+.btn-escolha:hover { border-color: var(--cor, var(--o2)); }
+.btn-escolha:active { transform: scale(.98); }
+
+/* Opção escolhida: borda colorida + marca ✓ (não só cor) */
+.btn-escolha.escolhida {
+  border-color: var(--cor, var(--energia));
+  background: color-mix(in srgb, var(--cor, var(--energia)) 18%, var(--fundo));
+}
+
+.btn-escolha.escolhida .escolha-texto::before { content: "✓ "; }
+
+.escolha-efeitos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Chips de efeito: ícone + número */
+.efeito {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  font-size: .9rem;
+  font-weight: 800;
+  border-radius: 999px;
+}
+
+.efeito .ico { width: 1.1em; height: 1.1em; }
+.efeito--bom    { color: var(--bom);  background: rgba(110, 224, 138, .14); }
+.efeito--ruim   { color: var(--ruim); background: rgba(255, 138, 122, .14); }
+.efeito--neutro { color: var(--texto-suave); background: rgba(255, 255, 255, .08); }
+
+/* Aviso embaixo quando falta escolher */
+.dica-escolha {
+  text-align: center;
+  font-weight: 800;
+  color: var(--energia);
+}
+
+.btn-principal:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+
 /* ---------- 14. ANIMAÇÕES (curtas e suaves) ---------- */
 @keyframes entrar {
   from { opacity: 0; transform: translateY(12px); }
@@ -794,6 +1010,38 @@ html[lang="en"] .btn-idioma .idioma-en {
   0%, 100% { transform: none; }
   25% { transform: translateX(-4px); }
   75% { transform: translateX(4px); }
+}
+
+@keyframes boiar {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+@keyframes piscar {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .2; }
+}
+
+@keyframes onda {
+  0%   { opacity: 0; }
+  40%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes pulsar {
+  0%, 100% { opacity: .08; }
+  50%      { opacity: .28; }
+}
+
+@keyframes soprar {
+  from { transform: translateX(-40px); }
+  to   { transform: translateX(40px); }
+}
+
+@keyframes tremer {
+  0%, 100% { transform: none; }
+  25% { transform: rotate(-6deg); }
+  75% { transform: rotate(6deg); }
 }
 
 @keyframes pular {
@@ -847,6 +1095,8 @@ html[lang="en"] .btn-idioma .idioma-en {
   }
 
   .tela--viagem > .mapa,
+  .tela--viagem > .cena,
+  .tela--base > .cena,
   .tela--viagem > .evento,
   .tela--viagem > .diario-ultimo,
   .tela--base > .diario-ultimo,

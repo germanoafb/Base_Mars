@@ -136,3 +136,47 @@ test("se o ar acaba, a missão termina mais cedo sem castigo", () => {
   assert.equal(e.fim.motivo, "o2");
   assert.ok(jogo.avaliar(e).dica.some((d) => d.chave === "fim_dica_o2"));
 });
+
+test("carta de decisão: precisa escolher, e a escolha muda energia e previsão", () => {
+  const { jogo } = carregar();
+  const e = jogo.criarJogo();
+  for (let i = 0; i < 6; i++) jogo.avancar(e, fixo(0.99));
+  jogo.avancar(e, fixo(0.3));             // tempestade de poeira na base
+  assert.equal(e.evento.tipo, "poeira");
+  assert.equal(jogo.precisaEscolher(e), true);
+  assert.equal(jogo.energiaDisponivel(e), 5);
+
+  const antes = jogo.previsao(e).o2;
+  assert.equal(jogo.escolher(e, "limpar_paineis"), true);
+  assert.equal(jogo.precisaEscolher(e), false);
+  assert.equal(jogo.energiaDisponivel(e), 8, "limpar os painéis devolve energia");
+  assert.equal(jogo.previsao(e).o2, antes - 8, "mas o traje gasta ar");
+
+  assert.equal(jogo.escolher(e, "opcao_que_nao_existe"), false);
+  assert.equal(jogo.escolher(e, "esperar_base"), true, "pode trocar antes de avançar");
+  assert.equal(jogo.energiaDisponivel(e), 5);
+});
+
+test("abrigo corta a dose da tempestade solar avisada", () => {
+  const { jogo } = carregar();
+  const dose = (escolha) => {
+    const e = jogo.criarJogo();
+    jogo.avancar(e, fixo(0.1));           // tempestade X avisada (rádio 2)
+    e.alocacao = { o2: 3, food: 3, shield: 0, comms: 2 };
+    jogo.escolher(e, escolha);
+    const r0 = e.rad;
+    jogo.avancar(e, fixo(0.99));
+    return e.rad - r0;
+  };
+  assert.ok(dose("abrigo") < dose("continuar"));
+});
+
+test("carta sem resposta fica com a última opção ao avançar", () => {
+  const { jogo } = carregar();
+  const e = jogo.criarJogo();
+  jogo.avancar(e, fixo(0.1));
+  assert.equal(jogo.precisaEscolher(e), true);
+  jogo.avancar(e, fixo(0.99));
+  assert.equal(e.historico.at(-1).evento.escolha, "continuar");
+  assert.ok(e.diario.some((x) => x.chave === "log_escolha"));
+});

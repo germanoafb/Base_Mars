@@ -61,7 +61,30 @@
 
   // ---------- Energia ----------
   function energiaDisponivel(e) {
-    return e.evento && e.evento.tipo === "poeira" ? CONFIG.energiaNaPoeira : CONFIG.energiaPorTurno;
+    const base = e.evento && e.evento.tipo === "poeira" ? CONFIG.energiaNaPoeira : CONFIG.energiaPorTurno;
+    return Math.max(0, base + (efeitoEscolhido(e).energia || 0));
+  }
+
+  // ---------- Cartas de decisão ----------
+  // Efeito da opção escolhida na carta do turno ({} se não há carta ou escolha)
+  function efeitoEscolhido(e) {
+    const ev = e.evento;
+    return ev && ev.visivel && ev.escolha ? ARES.eventos.efeitoDe(ev.tipo, ev.escolha) : {};
+  }
+
+  // A carta está na tela esperando uma escolha?
+  function precisaEscolher(e) {
+    const ev = e.evento;
+    return Boolean(ev && ev.visivel && ev.opcoes && ev.opcoes.length && !ev.escolha);
+  }
+
+  // Botão da carta: escolhe (ou troca) a opção. Devolve true se mudou.
+  function escolher(e, id) {
+    const ev = e.evento;
+    if (!ev || !ev.visivel || !ev.opcoes || !ev.opcoes.includes(id)) return false;
+    ev.escolha = id;
+    encaixarEnergia(e);
+    return true;
   }
 
   function energiaLivre(e) {
@@ -93,9 +116,11 @@
   // incluirOculto = false → só o que o jogador sabe (usado na previsão da tela)
   function calcularTurno(e, incluirOculto) {
     const a = e.alocacao;
+    const ef = efeitoEscolhido(e);
     const naViagem = e.fase === "viagem";
-    const o2 = limitar(Math.round(e.o2 + CONFIG.producao.o2 * a.o2 - CONFIG.consumo.o2), 0, 100);
-    const comida = limitar(Math.round(e.comida + CONFIG.producao.comida * a.food - CONFIG.consumo.comida), 0, 100);
+    const gastoAr = CONFIG.consumo.o2 + (ef.consumoO2 || 0);
+    const o2 = limitar(Math.round(e.o2 + CONFIG.producao.o2 * a.o2 - gastoAr + (ef.o2 || 0)), 0, 100);
+    const comida = limitar(Math.round(e.comida + CONFIG.producao.comida * a.food - CONFIG.consumo.comida + (ef.comida || 0)), 0, 100);
 
     const radComum = naViagem ? CONFIG.viagem.diasPorTurno * CONFIG.viagem.radDia : CONFIG.base.radSol;
     const fundo = radComum * (1 - CONFIG.escudo.fundo * a.shield);
@@ -104,7 +129,7 @@
     const ev = e.evento;
     if (ev && ev.tipo === "solar" && (incluirOculto || ev.visivel)) {
       tempestade = CONFIG.doseTempestade[ev.nivel] * (naViagem ? 1 : CONFIG.fatorMarte) *
-        (1 - CONFIG.escudo.tempestade * a.shield);
+        (1 - CONFIG.escudo.tempestade * a.shield) * (ef.tempestade ?? 1);
     }
 
     return {
@@ -137,8 +162,11 @@
     if (e.fase === "fim") return e;
     rng = rng || Math.random;
 
-    const r = calcularTurno(e, true);
+    // Carta sem resposta: fica com a última opção (a mais "neutra")
     const ev = e.evento;
+    if (precisaEscolher(e)) escolher(e, ev.opcoes[ev.opcoes.length - 1]);
+
+    const r = calcularTurno(e, true);
     const quando = rotulo(e);
     const id = e.historico.length + 1;
     const anotar = (chave, p) => e.diario.push({ turno: id, rotulo: quando, chave, p: p || {} });
@@ -147,7 +175,7 @@
       fase: e.fase,
       rotulo: quando,
       alocacao: Object.assign({}, e.alocacao),
-      evento: ev ? { tipo: ev.tipo, nivel: ev.nivel || null, visivel: ev.visivel } : null,
+      evento: ev ? { tipo: ev.tipo, nivel: ev.nivel || null, visivel: ev.visivel, escolha: ev.escolha || null } : null,
       o2: r.o2,
       comida: r.comida,
       dose: decimo(r.fundo + r.tempestade),
@@ -161,11 +189,12 @@
       const p = { classe: ev.classe, data: ev.data, dose: r.tempestade };
       if (!ev.visivel) anotar("log_solar_surpresa", p);
       else anotar(e.alocacao.shield >= 3 ? "log_solar_protegidos" : "log_solar_fraco", p);
-    } else if (ev && ev.tipo === "poeira") {
-      anotar("log_poeira");
+    } else if (ev) {
+      anotar("log_" + ev.tipo);          // log_poeira, log_filtro, log_praga
     } else {
       anotar((e.fase === "viagem" ? "log_calmo_" : "log_base_") + (id % 3));
     }
+    if (ev && ev.visivel && ev.escolha) anotar("log_escolha", { op: ev.escolha });
     if (e.alocacao.comms >= 1) {
       anotar("log_terra", { fato: e.fatosRecebidos % ARES.eventos.TOTAL_FATOS });
       e.fatosRecebidos += 1;
@@ -207,10 +236,12 @@
     const dica = [];
 
     const solares = h.filter((x) => x.evento && x.evento.tipo === "solar");
-    const protegidas = solares.filter((x) => x.alocacao.shield >= 3).length;
+    // Protegida = escudo forte (3+) ou tripulação no abrigo
+    const protegidas = solares.filter((x) => x.alocacao.shield >= 3 || x.evento.escolha === "abrigo").length;
     if (solares.length && protegidas === solares.length) certo.push({ chave: "fim_certo_escudo", p: { n: protegidas } });
     else if (protegidas > 0) certo.push({ chave: "fim_certo_escudo_parcial", p: { n: protegidas, total: solares.length } });
     if (protegidas < solares.length) dica.push({ chave: "fim_dica_escudo" });
+    if (solares.some((x) => x.evento.escolha === "abrigo")) certo.push({ chave: "fim_certo_abrigo" });
 
     const menor = (campo) => h.reduce((m, x) => (!m || x[campo] < m[campo] ? x : m), null);
     const piorO2 = menor("o2");
@@ -246,6 +277,9 @@
     SISTEMAS,
     criarJogo,
     energiaDisponivel,
+    efeitoEscolhido,
+    precisaEscolher,
+    escolher,
     energiaLivre,
     ajustar,
     previsao,
