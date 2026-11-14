@@ -32,6 +32,9 @@
   };
 
   const CHAVE_VISTO = "ares_tutorial_visto";
+  // true  = o tutorial abre SEMPRE que a página carrega, antes do jogo (dá para "Pular").
+  // false = abre só na primeira visita de cada navegador (e pelo botão "?").
+  const SEMPRE_ABRIR = true;
   const TREINO = 6;                                  // pontos de energia do treino (passo 4)
   const ESCUDO_PONTOS = 3;                           // pontos no escudo do passo 6
   const DOSE_X = C.doseTempestade.X;                 // mSv de uma tempestade forte sem escudo
@@ -762,7 +765,8 @@
     feitos = new Set();
     vozLigada = efeitosLigados();
     mostrarBoasVindas();
-    if (vozLigada && sintese) {
+    const jaTocou = !navigator.userActivation || navigator.userActivation.hasBeenActive;   // sem toque, o navegador não deixa falar
+    if (vozLigada && sintese && jaTocou) {
       try { window.speechSynthesis.resume && window.speechSynthesis.resume(); } catch (e) {}
       if (window.I18N && window.I18N.t) {
         const textoBoasVindas = window.I18N.t("tut_boasvindas_texto");
@@ -840,6 +844,6 @@
 
   window.TUTORIAL = { abrir, fechar, jaViu: visto };
 
-  function iniciar() { if (!visto()) abrir(); }
+  function iniciar() { if (SEMPRE_ABRIR || !visto()) abrir(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar); else iniciar();
 })();
