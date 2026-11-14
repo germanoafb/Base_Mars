@@ -1,0 +1,13 @@
+# Python (scripts de dados)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node
+node_modules/
+
+# Segredos e editores
+.env
+.vscode/
+.idea/
