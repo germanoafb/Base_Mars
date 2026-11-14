@@ -1,1 +1,852 @@
-/* Estilos visuais do jogo (cores, layout, botões). */
+/* =========================================================
+   PROJETO ARES — estilo visual
+   Ilustração chapada, formas redondas, cores vivas.
+   Mobile-first: o básico é para celular; telas maiores
+   ganham ajustes nos @media no fim do arquivo.
+   ========================================================= */
+
+
+/* ---------- 1. CORES E MEDIDAS (mude aqui para mudar o jogo todo) ---------- */
+:root {
+  /* Fundo e textos */
+  --fundo: #0b0d2a;          /* espaço */
+  --fundo-2: #1a1d4a;        /* espaço mais claro (degradê) */
+  --cartao: #20245a;         /* caixas e painéis */
+  --cartao-borda: #353a80;
+  --texto: #f4f1ff;          /* texto principal */
+  --texto-suave: #b9b6e3;    /* texto secundário */
+
+  /* Planetas */
+  --marte: #e8673c;
+  --marte-escuro: #b8432a;
+  --terra: #3f8cff;
+
+  /* Cada recurso tem sua cor (sempre junto com ícone + texto) */
+  --o2: #6fd3ff;             /* oxigênio: azul-claro */
+  --comida: #6ee08a;         /* comida: verde */
+  --escudo: #4f8dff;         /* escudo: azul */
+  --energia: #ffd23f;        /* energia: amarelo */
+  --radiacao: #ff7ab6;       /* radiação: rosa */
+  --comms: #c59bff;          /* rádio: lilás */
+
+  /* Previsões */
+  --bom: #6ee08a;
+  --ruim: #ff8a7a;
+
+  /* Formas */
+  --raio: 20px;              /* cantos arredondados */
+  --raio-pequeno: 12px;
+  --sombra: 0 6px 0 rgba(0, 0, 0, .25), 0 12px 24px rgba(0, 0, 0, .25);
+  --toque: 48px;             /* tamanho mínimo de botão (acima dos 44px pedidos) */
+
+  /* Fontes */
+  --fonte-titulo: "Baloo 2", "Trebuchet MS", sans-serif;
+  --fonte-texto: "Nunito", "Segoe UI", Arial, sans-serif;
+  --fonte-logo: "Tiny5 Duo", var(--fonte-titulo);
+
+  color-scheme: dark;
+}
+
+
+/* ---------- 2. BASE ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Fundo espacial: degradê + estrelas feitas só com CSS */
+body {
+  min-height: 100vh;
+  overflow-x: hidden;               /* nunca rolar para os lados */
+  font-family: var(--fonte-texto);
+  font-size: 1.0625rem;             /* 17px: fácil de ler */
+  line-height: 1.5;
+  color: var(--texto);
+  background-color: var(--fundo);
+  background-image:
+    radial-gradient(1.5px 1.5px at 20px 30px, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 120px 80px, #fff 50%, transparent 51%),
+    radial-gradient(2px 2px at 200px 150px, #fff8d6 50%, transparent 51%),
+    radial-gradient(1px 1px at 260px 40px, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 60px 200px, #d6e6ff 50%, transparent 51%),
+    radial-gradient(ellipse at 80% -10%, var(--fundo-2), transparent 60%),
+    radial-gradient(ellipse at 0% 110%, #2a1640, transparent 55%);
+  background-size: 300px 240px, 300px 240px, 300px 240px, 300px 240px, 300px 240px, 100% 100%, 100% 100%;
+  background-attachment: fixed;
+  display: flex;
+  flex-direction: column;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+h1,
+h2 {
+  font-family: var(--fonte-titulo);
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.3rem; }
+
+b { font-weight: 800; }
+
+a { color: var(--o2); }
+
+/* Contorno visível ao navegar com teclado */
+:focus-visible {
+  outline: 3px solid var(--energia);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+/* Tamanho padrão dos ícones SVG */
+.ico {
+  width: 1.5em;
+  height: 1.5em;
+  flex-shrink: 0;
+}
+
+/* Link "Pular para o jogo": só aparece com Tab */
+.pular {
+  position: absolute;
+  left: 8px;
+  top: -60px;
+  padding: 10px 16px;
+  background: var(--energia);
+  color: var(--fundo);
+  font-weight: 800;
+  border-radius: var(--raio-pequeno);
+  z-index: 10;
+}
+.pular:focus { top: 8px; }
+
+
+/* ---------- 3. TOPO (logo + idioma) ---------- */
+.topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.marca-planeta {
+  width: 36px;
+  height: 36px;
+}
+
+/* Nome do jogo com a fonte pixelada escolhida pela equipe */
+.marca-nome {
+  font-family: var(--fonte-logo);
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--marte);
+  letter-spacing: .02em;
+}
+
+/* Botão PT/EN: o idioma ativo fica destacado (cor + sublinhado) */
+.btn-idioma {
+  min-height: var(--toque);
+  min-width: var(--toque);
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 800 1rem var(--fonte-texto);
+  color: var(--texto-suave);
+  background: var(--cartao);
+  border: 2px solid var(--cartao-borda);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* O idioma ativo vem do atributo lang da página (<html lang="...">) */
+html[lang="pt-BR"] .btn-idioma .idioma-pt,
+html[lang="en"] .btn-idioma .idioma-en {
+  color: var(--texto);
+  text-decoration: underline 3px var(--energia);
+  text-underline-offset: 4px;
+}
+
+.btn-idioma:hover { border-color: var(--o2); }
+
+
+/* ---------- 4. ÁREA DO JOGO ---------- */
+#app {
+  flex: 1;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 8px 16px 32px;
+}
+
+#app:focus { outline: none; }
+
+/* Cada tela: coluna centralizada com espaço entre as partes */
+.tela {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: entrar .35s ease-out;
+}
+
+.lead {
+  font-size: 1.15rem;
+  color: var(--texto-suave);
+  max-width: 36em;
+}
+
+.subtitulo {
+  font-size: 1.25rem;
+}
+
+/* Explicação curta de termo científico (sol, mSv...) */
+.explica {
+  font-size: .95rem;
+  color: var(--texto-suave);
+}
+
+.explica b { color: var(--texto); }
+
+
+/* ---------- 5. BOTÕES ---------- */
+.btn {
+  min-height: 56px;
+  padding: 12px 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font: 800 1.2rem var(--fonte-titulo);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+/* Botão principal: laranja Marte, efeito de "apertar" */
+.btn-principal {
+  width: 100%;
+  color: #fff;
+  background: var(--marte);
+  box-shadow: 0 6px 0 var(--marte-escuro);
+}
+
+.btn-principal:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--marte-escuro); }
+.btn-principal:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--marte-escuro); }
+
+.btn-principal .ico { width: 2em; height: 1em; }
+
+.btn-secundario {
+  width: 100%;
+  color: var(--texto);
+  background: transparent;
+  border: 3px solid var(--cartao-borda);
+}
+
+.btn-secundario:hover { border-color: var(--o2); }
+
+/* Botões − e + da energia */
+.btn-passo {
+  width: var(--toque);
+  height: var(--toque);
+  flex-shrink: 0;
+  font: 800 1.6rem/1 var(--fonte-titulo);
+  color: var(--fundo);
+  background: var(--texto);
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 4px 0 #9b97c9;
+  cursor: pointer;
+  transition: transform .1s ease;
+}
+
+.btn-passo:active { transform: translateY(3px); box-shadow: 0 1px 0 #9b97c9; }
+
+.btn-passo:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+
+/* ---------- 6. TELA 1: LANÇAMENTO ---------- */
+.tela--lancamento {
+  text-align: center;
+  align-items: center;
+}
+
+.cena-lancamento {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+}
+
+.cena-svg { width: 100%; height: auto; }
+
+/* Nave voando de leve sobre a cena */
+.nave-lancamento {
+  position: absolute;
+  left: 42%;
+  top: 18%;
+  width: 22%;
+  transform: rotate(-12deg);
+  animation: flutuar 3s ease-in-out infinite;
+}
+
+/* Cartões dos astronautas */
+.tripulacao {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.astronauta {
+  flex: 1 1 96px;
+  max-width: 150px;
+  padding: 14px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--cartao);
+  border: 2px solid var(--cartao-borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+
+.astronauta-rosto {
+  width: 72px;
+  height: 72px;
+}
+
+.astronauta-nome {
+  font-family: var(--fonte-titulo);
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.astronauta-papel {
+  font-size: .9rem;
+  color: var(--texto-suave);
+}
+
+.tela--lancamento .btn-principal { max-width: 360px; }
+
+
+/* ---------- 7. PAINEL: energia + barras ---------- */
+.painel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--cartao);
+  border: 2px solid var(--cartao-borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+
+/* Contador de energia (amarelo) */
+.energia {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255, 210, 63, .12);
+  border: 2px solid var(--energia);
+  border-radius: var(--raio-pequeno);
+}
+
+.ico--energia { color: var(--energia); width: 2em; height: 2em; }
+
+.energia-rotulo { font-weight: 800; }
+
+.energia-valor {
+  margin-left: auto;
+  font-size: 1.1rem;
+}
+
+.energia-valor b {
+  font-family: var(--fonte-titulo);
+  font-size: 1.8rem;
+  color: var(--energia);
+}
+
+/* Barras de recurso */
+.barras {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Cada barra define sua cor em --cor */
+.barra--o2     { --cor: var(--o2); }
+.barra--comida { --cor: var(--comida); }
+.barra--rad    { --cor: var(--radiacao); }
+
+.barra-topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.barra-topo .ico { color: var(--cor); }
+
+.barra-nome { font-weight: 800; }
+
+.barra-num {
+  margin-left: auto;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.barra-trilho {
+  position: relative;
+  height: 18px;
+  background: rgba(0, 0, 0, .35);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+/* Valor atual */
+.barra-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--val, 50%);
+  background: var(--cor);
+  border-radius: 999px;
+  transition: width .4s ease;
+}
+
+/* Previsão do fim do turno: listrada, aparece atrás do valor atual */
+.barra-prev {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--prev, 0%);
+  background: repeating-linear-gradient(-45deg, var(--cor) 0 6px, transparent 6px 12px);
+  opacity: .55;
+  border-radius: 999px;
+  transition: width .4s ease;
+}
+
+.barra--rad .explica { margin-top: 6px; }
+
+/* Previsão (+/-): seta + número + cor (nunca só cor) */
+.previsao {
+  display: inline-block;
+  padding: 1px 8px;
+  margin-left: 4px;
+  font-size: .9rem;
+  font-weight: 800;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.previsao--bom    { color: var(--bom);  background: rgba(110, 224, 138, .14); }
+.previsao--ruim   { color: var(--ruim); background: rgba(255, 138, 122, .14); }
+.previsao--neutra { color: var(--texto-suave); background: rgba(255, 255, 255, .08); }
+
+
+/* ---------- 8. TELA 2: MAPA DA VIAGEM ---------- */
+.mapa {
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(32, 36, 90, .6), rgba(32, 36, 90, .2));
+  border: 2px solid var(--cartao-borda);
+  border-radius: var(--raio);
+}
+
+.mapa-titulo {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+}
+
+/* Linha Terra → Marte. A nave anda conforme --progresso */
+.mapa-trilha {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mapa-planeta { width: 48px; height: 48px; flex-shrink: 0; }
+.mapa-planeta--marte { width: 40px; height: 40px; }
+
+.mapa-linha {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  margin: 0 18px;            /* espaço para a nave não cobrir os planetas */
+  background: repeating-linear-gradient(90deg, rgba(185, 182, 227, .8) 0 6px, transparent 6px 14px);
+  border-radius: 999px;
+}
+
+.mapa-feito {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--progresso, 0%);
+  background: var(--energia);
+  border-radius: 999px;
+  transition: width .6s ease;
+}
+
+/* Nave: anda sobre a linha conforme --progresso (0% a 100%) */
+.mapa-nave {
+  position: absolute;
+  top: 50%;
+  left: var(--progresso, 0%);
+  width: 48px;
+  transform: translate(-50%, -50%);
+  transition: left .6s ease;
+  filter: drop-shadow(0 0 6px rgba(255, 210, 63, .6));
+}
+
+.mapa-legenda {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: .9rem;
+  color: var(--texto-suave);
+  font-weight: 700;
+}
+
+/* Avisos curtos com ícone */
+.aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: var(--raio-pequeno);
+  font-size: .98rem;
+}
+
+.aviso--rad {
+  background: rgba(255, 122, 182, .12);
+  border-left: 5px solid var(--radiacao);
+}
+
+.aviso--rad .ico { color: var(--radiacao); }
+
+
+/* ---------- 9. DIVISÃO DE ENERGIA (− e +) ---------- */
+.energia-divisao {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aloc--o2     { --cor: var(--o2); }
+.aloc--comida { --cor: var(--comida); }
+.aloc--escudo { --cor: var(--escudo); }
+.aloc--comms  { --cor: var(--comms); }
+
+/* Linha: ícone | nome | − | bolinhas | + | previsão */
+.aloc {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  grid-template-areas:
+    "ico nome  nome   nome  prev"
+    "ico menos pontos mais  prev";
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 6px;
+  padding: 10px 12px;
+  background: var(--cartao);
+  border: 2px solid var(--cartao-borda);
+  border-left: 6px solid var(--cor);
+  border-radius: var(--raio-pequeno);
+}
+
+.aloc > .ico { grid-area: ico; color: var(--cor); width: 2em; height: 2em; }
+.aloc-nome { grid-area: nome; font-weight: 800; }
+.aloc .btn-passo:first-of-type { grid-area: menos; }
+.aloc .btn-passo:last-of-type { grid-area: mais; }
+.aloc .previsao { grid-area: prev; }
+
+/* Bolinhas de energia: cheias (on) ou vazias */
+.aloc-pontos {
+  grid-area: pontos;
+  display: flex;
+  gap: 5px;
+}
+
+.aloc-pontos i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--cor);
+}
+
+.aloc-pontos i.on { background: var(--cor); }
+
+
+/* ---------- 10. TELA 3: BASE EM MARTE ---------- */
+.sol-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ico--sol {
+  width: 52px;
+  height: 52px;
+  color: var(--energia);
+  animation: girar 20s linear infinite;
+}
+
+.sol-titulo { font-size: 1.8rem; }
+
+.cena-base {
+  height: 120px;
+  border-radius: var(--raio);
+  overflow: hidden;
+  background: linear-gradient(180deg, #e9a27a, #f3c6a0);
+}
+
+.cena-base svg { width: 100%; height: 100%; }
+
+/* Caixa de evento (tempestade) */
+.evento {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--raio);
+  border: 3px solid var(--cor);
+  background: color-mix(in srgb, var(--cor) 14%, var(--fundo));
+  animation: chacoalhar .5s ease-out;
+}
+
+.evento > .ico { width: 2.4em; height: 2.4em; color: var(--cor); }
+
+.evento--poeira { --cor: #f0a35e; }
+.evento--solar  { --cor: var(--energia); }
+
+.evento-titulo { font-size: 1.25rem; margin-bottom: 2px; }
+
+
+/* ---------- 11. DIÁRIO DE BORDO ---------- */
+.diario-ultimo {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, .06);
+  border-radius: var(--raio-pequeno);
+  font-size: 1rem;
+}
+
+.diario-ultimo .ico { color: var(--texto-suave); }
+
+.tela--diario h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.diario {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Cada entrada parece uma página de caderno */
+.diario-item {
+  padding: 12px 16px;
+  background: var(--cartao);
+  border-left: 6px solid var(--texto-suave);
+  border-radius: var(--raio-pequeno);
+}
+
+.diario-item--poeira { border-left-color: #f0a35e; }
+.diario-item--solar  { border-left-color: var(--energia); }
+.diario-item--bom    { border-left-color: var(--comida); }
+
+
+/* ---------- 12. TELA 5: DEBRIEFING ---------- */
+.tela--fim { text-align: center; align-items: center; }
+
+.medalha svg {
+  width: 96px;
+  height: 96px;
+  animation: pular 0.6s ease-out;
+}
+
+.resumo {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.resumo li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--cartao);
+  border-radius: 999px;
+}
+
+.resumo b { font-size: 1.2rem; }
+
+.debrief {
+  width: 100%;
+  padding: 16px;
+  text-align: left;
+  background: var(--cartao);
+  border-radius: var(--raio);
+  border-top: 6px solid var(--cor);
+}
+
+.debrief--certo { --cor: var(--comida); }
+.debrief--dica  { --cor: var(--energia); }
+
+.debrief h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.debrief h2 .ico { color: var(--cor); }
+
+.debrief ul { padding-left: 1.2em; }
+.debrief li + li { margin-top: 6px; }
+
+.tela--fim .btn-principal { max-width: 360px; }
+
+
+/* ---------- 13. RODAPÉ (fontes dos dados) ---------- */
+.rodape {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px 16px 28px;
+  font-size: .85rem;
+  color: var(--texto-suave);
+  border-top: 1px solid var(--cartao-borda);
+}
+
+.rodape-aviso { margin-bottom: 8px; }
+.rodape-aviso b { color: var(--energia); }
+
+.rodape-fontes {
+  padding-left: 1.2em;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rodape-credito { margin-top: 10px; }
+
+
+/* ---------- 14. ANIMAÇÕES (curtas e suaves) ---------- */
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes flutuar {
+  0%, 100% { transform: rotate(-12deg) translateY(0); }
+  50%      { transform: rotate(-12deg) translateY(-8px); }
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes chacoalhar {
+  0%, 100% { transform: none; }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@keyframes pular {
+  0%   { transform: scale(.5); }
+  70%  { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Quem pediu menos movimento no aparelho não vê animações */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+
+/* ---------- 15. TELAS MAIORES (tablet e computador) ---------- */
+@media (min-width: 640px) {
+  h1 { font-size: 2.4rem; }
+
+  #app { padding: 16px 24px 40px; }
+
+  /* Linha de energia vira uma linha só */
+  .aloc {
+    grid-template-columns: auto 1fr auto auto auto 64px;
+    grid-template-areas: "ico nome menos pontos mais prev";
+  }
+
+  .aloc .previsao { text-align: center; }
+
+  .aloc-pontos i { width: 16px; height: 16px; }
+
+  .btn-principal { max-width: 420px; align-self: center; }
+  .btn-secundario { max-width: 420px; align-self: center; }
+
+  .mapa-planeta { width: 64px; height: 64px; }
+  .mapa-planeta--marte { width: 52px; height: 52px; }
+}
+
+@media (min-width: 900px) {
+  /* Viagem e base: painel à esquerda, controles à direita */
+  .tela--viagem,
+  .tela--base {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 20px 24px;
+  }
+
+  .tela--viagem > .mapa,
+  .tela--base > .sol-cabecalho,
+  .tela--base > .cena-base,
+  .tela--base > .evento,
+  .tela--viagem > .btn,
+  .tela--base > .btn {
+    grid-column: 1 / -1;
+  }
+
+  .tela--viagem > .mapa { order: -1; }
+}

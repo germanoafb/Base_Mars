@@ -1,2 +1,441 @@
-<!-- Página principal do jogo. O GitHub Pages serve este arquivo direto. -->
-<!-- Carrega static/styles/style.css e static/js/main.js (como type="module"). -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projeto Ares</title>
+  <meta name="description" content="Projeto Ares: comande uma missão a Marte e divida a energia da nave. Jogo educativo para crianças de 7 a 12 anos com dados reais da NASA.">
+  <meta name="theme-color" content="#0b0d2a">
+
+  <!-- FONTES (Google Fonts): Baloo 2 para títulos, Nunito para textos, Tiny5 Duo (pixelada) no logo -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;700;800&family=Tiny5+Duo&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="static/styles/style.css">
+</head>
+
+<body>
+
+  <!--
+    ÍCONES (SVG)
+    Desenhados uma vez aqui e reutilizados em qualquer lugar com:
+      <svg class="ico"><use href="#i-o2"/></svg>
+    Assim o código que gera as telas fica curto.
+  -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <!-- Oxigênio: bolhas -->
+      <symbol id="i-o2" viewBox="0 0 24 24">
+        <circle cx="9" cy="14" r="6" fill="currentColor"/>
+        <circle cx="17" cy="7" r="3.5" fill="currentColor" opacity=".75"/>
+        <circle cx="18.5" cy="16" r="2" fill="currentColor" opacity=".55"/>
+        <circle cx="7" cy="12" r="1.6" fill="#fff" opacity=".7"/>
+      </symbol>
+      <!-- Comida: folha / planta -->
+      <symbol id="i-food" viewBox="0 0 24 24">
+        <path d="M12 22V12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+        <path d="M12 13C12 7 7 4 3 4c0 5 3 9 9 9z" fill="currentColor"/>
+        <path d="M12 11c0-5 4-8 9-8 0 5-3 8-9 8z" fill="currentColor" opacity=".75"/>
+      </symbol>
+      <!-- Escudo de radiação -->
+      <symbol id="i-shield" viewBox="0 0 24 24">
+        <path d="M12 2l8 3v6c0 5-3.4 9.3-8 11-4.6-1.7-8-6-8-11V5l8-3z" fill="currentColor"/>
+        <path d="M12 5.5l5 1.9V11c0 3.3-2 6.2-5 7.6z" fill="#fff" opacity=".3"/>
+      </symbol>
+      <!-- Comunicação: antena -->
+      <symbol id="i-comms" viewBox="0 0 24 24">
+        <path d="M12 12v9M8 21h8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+        <circle cx="12" cy="10" r="2.6" fill="currentColor"/>
+        <path d="M7.5 5.5a6.5 6.5 0 0 0 0 9M16.5 5.5a6.5 6.5 0 0 1 0 9M4.5 3a10 10 0 0 0 0 14M19.5 3a10 10 0 0 1 0 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      </symbol>
+      <!-- Energia: raio -->
+      <symbol id="i-energy" viewBox="0 0 24 24">
+        <path d="M13.5 2L4 13.5h6.5L9 22l10-12h-6.5z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
+      </symbol>
+      <!-- Radiação: símbolo de 3 pás -->
+      <symbol id="i-rad" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="2.2" fill="currentColor"/>
+        <path d="M12 9.4L8.6 3.5a10 10 0 0 1 6.8 0zM14.25 13.3l6.8 0a10 10 0 0 1-3.4 5.9zM9.75 13.3L6.35 19.2a10 10 0 0 1-3.4-5.9z" fill="currentColor"/>
+      </symbol>
+      <!-- Sol (dia marciano) -->
+      <symbol id="i-sol" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="5" fill="currentColor"/>
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+      <!-- Tempestade solar -->
+      <symbol id="i-flare" viewBox="0 0 24 24">
+        <circle cx="9" cy="12" r="6" fill="currentColor"/>
+        <path d="M15 6l5-2M16 12h6M15 18l5 2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+      </symbol>
+      <!-- Tempestade de poeira: redemoinho -->
+      <symbol id="i-dust" viewBox="0 0 24 24">
+        <path d="M3 7h12a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 17h8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+      </symbol>
+      <!-- Diário: livro -->
+      <symbol id="i-log" viewBox="0 0 24 24">
+        <path d="M5 3h11a3 3 0 0 1 3 3v15H8a3 3 0 0 1-3-3z" fill="currentColor"/>
+        <path d="M9 8h6M9 12h6" stroke="#0b0d2a" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+      <!-- Certo (debriefing) -->
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" fill="currentColor"/>
+        <path d="M7 12.5l3.2 3.2L17 9" stroke="#0b0d2a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </symbol>
+      <!-- Ideia / dica (debriefing) -->
+      <symbol id="i-idea" viewBox="0 0 24 24">
+        <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" fill="currentColor"/>
+        <path d="M9 20h6M10 22.5h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+      <!-- Foguete / nave -->
+      <symbol id="i-ship" viewBox="0 0 48 24">
+        <path d="M6 12c0-3 2-5 6-6h18c6 0 12 3 16 6-4 3-10 6-16 6H12c-4-1-6-3-6-6z" fill="#f4f1ff"/>
+        <circle cx="32" cy="12" r="3.2" fill="#6fd3ff" stroke="#2a2f6b" stroke-width="1.5"/>
+        <path d="M14 6l-4-5h7l5 5zM14 18l-4 5h7l5-5z" fill="#ff7a59"/>
+        <path d="M6 9L0 12l6 3z" fill="#ffd23f"/>
+      </symbol>
+      <!-- Rosto de astronauta: a cor da pele vem da variável --pele -->
+      <symbol id="i-astro" viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r="30" fill="#f4f1ff"/>
+        <circle cx="32" cy="32" r="30" fill="none" stroke="#c9c4ea" stroke-width="3"/>
+        <rect x="12" y="15" width="40" height="34" rx="17" fill="var(--pele, #f1c27d)"/>
+        <path d="M14 26c2-9 10-13 18-13s16 4 18 13c-6-4-12-5-18-5s-12 1-18 5z" fill="var(--cabelo, #3b2a20)"/>
+        <circle cx="25" cy="32" r="2.8" fill="#1d1b38"/>
+        <circle cx="39" cy="32" r="2.8" fill="#1d1b38"/>
+        <circle cx="20" cy="38" r="3" fill="#ff8fa3" opacity=".55"/>
+        <circle cx="44" cy="38" r="3" fill="#ff8fa3" opacity=".55"/>
+        <path d="M26 40q6 5 12 0" stroke="#1d1b38" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+        <path d="M12 22a22 22 0 0 1 14-10" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".8"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- Link para pular direto ao jogo (ajuda quem usa teclado ou leitor de tela) -->
+  <a class="pular" href="#app" data-i18n="pular">Pular para o jogo</a>
+
+  <!-- ===================== TOPO ===================== -->
+  <header class="topo">
+    <div class="marca">
+      <!-- Mini Marte desenhado em SVG -->
+      <svg class="marca-planeta" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="16" cy="16" r="14" fill="var(--marte)"/>
+        <circle cx="11" cy="12" r="3" fill="var(--marte-escuro)"/>
+        <circle cx="20" cy="20" r="4" fill="var(--marte-escuro)"/>
+        <circle cx="22" cy="10" r="1.6" fill="var(--marte-escuro)"/>
+      </svg>
+      <span class="marca-nome">Projeto Ares</span>
+    </div>
+
+    <!-- Botão de idioma: a lógica do jogo troca o texto quando recebe data-a="lang" -->
+    <button class="btn-idioma" type="button" data-a="lang" aria-label="Mudar idioma / Change language">
+      <span class="idioma-pt" lang="pt-BR">PT</span>
+      <span class="idioma-sep" aria-hidden="true">/</span>
+      <span class="idioma-en" lang="en">EN</span>
+    </button>
+  </header>
+
+  <!-- ===================== JOGO =====================
+    O código do jogo coloca as telas aqui dentro (innerHTML).
+    O conteúdo abaixo é a TELA 1 (lançamento), que aparece enquanto o jogo carrega.
+    Os modelos das outras telas estão nos <template> mais abaixo.
+  -->
+  <main id="app" tabindex="-1">
+
+    <!-- TELA 1: LANÇAMENTO -->
+    <section class="tela tela--lancamento" aria-labelledby="t-lanc">
+      <div class="cena-lancamento" aria-hidden="true">
+        <svg viewBox="0 0 320 120" class="cena-svg">
+          <circle cx="40" cy="120" r="70" fill="var(--terra)"/>
+          <path d="M5 95q20-15 40-5t30-10" stroke="var(--comida)" stroke-width="10" fill="none" stroke-linecap="round" opacity=".8"/>
+          <circle cx="280" cy="40" r="26" fill="var(--marte)"/>
+          <circle cx="272" cy="34" r="5" fill="var(--marte-escuro)"/>
+          <circle cx="290" cy="50" r="6" fill="var(--marte-escuro)"/>
+          <path d="M80 70Q170 10 248 40" stroke="var(--texto-suave)" stroke-width="2.5" stroke-dasharray="2 9" stroke-linecap="round" fill="none"/>
+        </svg>
+        <svg class="nave-lancamento" viewBox="0 0 48 24"><use href="#i-ship"/></svg>
+      </div>
+
+      <h1 id="t-lanc" data-i18n="lanc_titulo">Rumo a Marte, comandante!</h1>
+      <p class="lead" data-i18n="lanc_lead">Sua nave tem pouca energia. Divida bem entre ar, comida e escudo. Nenhuma escolha é de graça!</p>
+
+      <h2 class="subtitulo" data-i18n="tripulacao">Sua tripulação</h2>
+      <!-- Cada astronauta: troque --pele e --cabelo para mudar o rosto -->
+      <ul class="tripulacao">
+        <li class="astronauta">
+          <svg class="astronauta-rosto" style="--pele:#f1c27d;--cabelo:#3b2a20" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-astro"/></svg>
+          <span class="astronauta-nome">Lia</span>
+          <span class="astronauta-papel" data-i18n="papel_comandante">Comandante</span>
+        </li>
+        <li class="astronauta">
+          <svg class="astronauta-rosto" style="--pele:#8d5524;--cabelo:#1b1b1b" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-astro"/></svg>
+          <span class="astronauta-nome">Davi</span>
+          <span class="astronauta-papel" data-i18n="papel_engenheiro">Engenheiro</span>
+        </li>
+        <li class="astronauta">
+          <svg class="astronauta-rosto" style="--pele:#e0ac69;--cabelo:#a0522d" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-astro"/></svg>
+          <span class="astronauta-nome">Yara</span>
+          <span class="astronauta-papel" data-i18n="papel_botanica">Botânica</span>
+        </li>
+      </ul>
+
+      <button class="btn btn-principal" type="button" data-a="next">
+        <svg class="ico" aria-hidden="true"><use href="#i-ship"/></svg>
+        <span data-i18n="lancar">Lançar a nave!</span>
+      </button>
+    </section>
+
+  </main>
+
+  <!--
+    ===================== MODELOS DAS TELAS =====================
+    <template> não aparece na página. Serve de exemplo da marcação
+    (classes e data-a) que o código do jogo deve gerar para cada tela.
+  -->
+
+  <!-- TELA 2: VIAGEM (mapa Terra → Marte) -->
+  <template id="tpl-viagem">
+    <section class="tela tela--viagem" aria-labelledby="t-viagem">
+
+      <!-- PAINEL (HUD): energia + 3 barras -->
+      <div class="painel">
+        <!-- Contador de energia -->
+        <div class="energia" role="status">
+          <svg class="ico ico--energia" aria-hidden="true"><use href="#i-energy"/></svg>
+          <span class="energia-rotulo" data-i18n="energia_livre">Energia livre</span>
+          <span class="energia-valor"><b>2</b> <span data-i18n="de">de</span> 10</span>
+        </div>
+
+        <!-- Barras: --val = valor agora, --prev = previsão no fim do turno -->
+        <div class="barras">
+          <div class="barra barra--o2">
+            <div class="barra-topo">
+              <svg class="ico" aria-hidden="true"><use href="#i-o2"/></svg>
+              <span class="barra-nome" data-i18n="oxigenio">Oxigênio</span>
+              <span class="barra-num">72% <span class="previsao previsao--bom">▲ 78%</span></span>
+            </div>
+            <div class="barra-trilho" role="meter" aria-label="Oxigênio" aria-valuemin="0" aria-valuemax="100" aria-valuenow="72">
+              <div class="barra-prev" style="--prev:78%"></div>
+              <div class="barra-fill" style="--val:72%"></div>
+            </div>
+          </div>
+
+          <div class="barra barra--comida">
+            <div class="barra-topo">
+              <svg class="ico" aria-hidden="true"><use href="#i-food"/></svg>
+              <span class="barra-nome" data-i18n="comida">Comida</span>
+              <span class="barra-num">60% <span class="previsao previsao--ruim">▼ 55%</span></span>
+            </div>
+            <div class="barra-trilho" role="meter" aria-label="Comida" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60">
+              <div class="barra-prev" style="--prev:55%"></div>
+              <div class="barra-fill" style="--val:60%"></div>
+            </div>
+          </div>
+
+          <!-- Radiação: aqui a barra cheia é RUIM (dose acumulada) -->
+          <div class="barra barra--rad">
+            <div class="barra-topo">
+              <svg class="ico" aria-hidden="true"><use href="#i-rad"/></svg>
+              <span class="barra-nome" data-i18n="radiacao">Radiação</span>
+              <span class="barra-num">18 mSv <span class="previsao previsao--ruim">▲ 19,8</span></span>
+            </div>
+            <div class="barra-trilho" role="meter" aria-label="Radiação acumulada" aria-valuemin="0" aria-valuemax="100" aria-valuenow="18">
+              <div class="barra-prev" style="--prev:19.8%"></div>
+              <div class="barra-fill" style="--val:18%"></div>
+            </div>
+            <!-- Explicação curta do termo científico, logo ao lado -->
+            <p class="explica" data-i18n="explica_msv"><b>mSv</b> (milisievert) mede quanta radiação o corpo recebeu. Quanto menos, melhor!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAPA: --progresso vai de 0% (Terra) a 100% (Marte) -->
+      <div class="mapa" style="--progresso:40%">
+        <h1 id="t-viagem" class="mapa-titulo" data-i18n="dia_viagem" data-n="72">Dia 72 de viagem</h1>
+        <div class="mapa-trilha" aria-hidden="true">
+          <svg class="mapa-planeta mapa-planeta--terra" viewBox="0 0 40 40">
+            <circle cx="20" cy="20" r="18" fill="var(--terra)"/>
+            <path d="M8 14q6-4 10 1t8 0M12 28q5 3 12-2" stroke="var(--comida)" stroke-width="4" stroke-linecap="round" fill="none"/>
+          </svg>
+          <div class="mapa-linha">
+            <div class="mapa-feito"></div>
+            <svg class="mapa-nave" viewBox="0 0 48 24"><use href="#i-ship"/></svg>
+          </div>
+          <svg class="mapa-planeta mapa-planeta--marte" viewBox="0 0 40 40">
+            <circle cx="20" cy="20" r="18" fill="var(--marte)"/>
+            <circle cx="14" cy="15" r="4" fill="var(--marte-escuro)"/>
+            <circle cx="25" cy="26" r="5" fill="var(--marte-escuro)"/>
+          </svg>
+        </div>
+        <p class="mapa-legenda"><span data-i18n="terra">Terra</span><span data-i18n="caminho" data-n="40">40% do caminho</span><span data-i18n="marte">Marte</span></p>
+        <p class="aviso aviso--rad">
+          <svg class="ico" aria-hidden="true"><use href="#i-rad"/></svg>
+          <span data-i18n="aviso_rad">No espaço a radiação é cerca de <b>3 vezes maior</b> que em Marte. Escudo ajuda!</span>
+        </p>
+      </div>
+
+      <!-- DIVISÃO DE ENERGIA: botões − e + -->
+      <div class="energia-divisao">
+        <h2 class="subtitulo" data-i18n="para_onde">Para onde vai a energia?</h2>
+
+        <!-- Cada linha: ícone, nome, −, bolinhas, +, previsão -->
+        <div class="aloc aloc--o2">
+          <svg class="ico" aria-hidden="true"><use href="#i-o2"/></svg>
+          <span class="aloc-nome" data-i18n="oxigenio">Oxigênio</span>
+          <button class="btn-passo" type="button" data-a="adj" data-k="o2" data-d="-1" aria-label="Menos energia para oxigênio" data-i18n-aria="menos_o2">−</button>
+          <span class="aloc-pontos" aria-label="3 de energia"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span>
+          <button class="btn-passo" type="button" data-a="adj" data-k="o2" data-d="1" aria-label="Mais energia para oxigênio" data-i18n-aria="mais_o2">+</button>
+          <span class="previsao previsao--bom">+6</span>
+        </div>
+
+        <div class="aloc aloc--comida">
+          <svg class="ico" aria-hidden="true"><use href="#i-food"/></svg>
+          <span class="aloc-nome" data-i18n="comida">Comida</span>
+          <button class="btn-passo" type="button" data-a="adj" data-k="food" data-d="-1" aria-label="Menos energia para comida" data-i18n-aria="menos_food">−</button>
+          <span class="aloc-pontos" aria-label="1 de energia"><i class="on"></i><i></i><i></i><i></i><i></i></span>
+          <button class="btn-passo" type="button" data-a="adj" data-k="food" data-d="1" aria-label="Mais energia para comida" data-i18n-aria="mais_food">+</button>
+          <span class="previsao previsao--ruim">−5</span>
+        </div>
+
+        <div class="aloc aloc--escudo">
+          <svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg>
+          <span class="aloc-nome" data-i18n="escudo">Escudo</span>
+          <button class="btn-passo" type="button" data-a="adj" data-k="shield" data-d="-1" aria-label="Menos energia para o escudo" data-i18n-aria="menos_shield">−</button>
+          <span class="aloc-pontos" aria-label="3 de energia"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span>
+          <button class="btn-passo" type="button" data-a="adj" data-k="shield" data-d="1" aria-label="Mais energia para o escudo" data-i18n-aria="mais_shield">+</button>
+          <span class="previsao previsao--neutra">=</span>
+        </div>
+
+        <div class="aloc aloc--comms">
+          <svg class="ico" aria-hidden="true"><use href="#i-comms"/></svg>
+          <span class="aloc-nome" data-i18n="radio">Rádio Terra</span>
+          <button class="btn-passo" type="button" data-a="adj" data-k="comms" data-d="-1" aria-label="Menos energia para o rádio" data-i18n-aria="menos_comms">−</button>
+          <span class="aloc-pontos" aria-label="1 de energia"><i class="on"></i><i></i><i></i><i></i><i></i></span>
+          <button class="btn-passo" type="button" data-a="adj" data-k="comms" data-d="1" aria-label="Mais energia para o rádio" data-i18n-aria="mais_comms">+</button>
+          <span class="previsao previsao--neutra">=</span>
+        </div>
+      </div>
+
+      <!-- DIÁRIO DE BORDO: última entrada -->
+      <div class="diario-ultimo">
+        <svg class="ico" aria-hidden="true"><use href="#i-log"/></svg>
+        <p data-i18n="diario_ex1"><b>Dia 71:</b> tudo calmo. A Lia viu a Terra virar um pontinho azul.</p>
+      </div>
+
+      <button class="btn btn-principal" type="button" data-a="next" data-i18n="proximo_turno">Próximo turno ➜</button>
+    </section>
+  </template>
+
+  <!-- TELA 3: BASE EM MARTE (turnos em sóis) -->
+  <template id="tpl-base">
+    <section class="tela tela--base" aria-labelledby="t-base">
+
+      <div class="sol-cabecalho">
+        <svg class="ico ico--sol" aria-hidden="true"><use href="#i-sol"/></svg>
+        <div>
+          <h1 id="t-base" class="sol-titulo"><span data-i18n="sol">Sol</span> 7 <span data-i18n="de">de</span> 30</h1>
+          <p class="explica" data-i18n="explica_sol"><b>Sol</b> = um dia em Marte. Dura 24 horas e 39 minutos.</p>
+        </div>
+      </div>
+
+      <!-- Cena da base em SVG -->
+      <div class="cena-base" aria-hidden="true">
+        <svg viewBox="0 0 320 110" preserveAspectRatio="xMidYMax slice">
+          <path d="M0 80q40-20 90-6t90-10 140 4v42H0z" fill="var(--marte-escuro)"/>
+          <path d="M0 92q60-12 130 0t190-4v22H0z" fill="var(--marte)"/>
+          <rect x="120" y="64" width="64" height="26" rx="13" fill="#f4f1ff"/>
+          <circle cx="140" cy="76" r="5" fill="var(--o2)"/>
+          <circle cx="164" cy="76" r="5" fill="var(--o2)"/>
+          <path d="M200 90V58M192 52l16 0" stroke="#c9c4ea" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="200" cy="50" r="5" fill="none" stroke="var(--texto-suave)" stroke-width="2.5"/>
+          <rect x="40" y="70" width="44" height="16" rx="3" fill="var(--escudo)" transform="skewX(-15)"/>
+          <path d="M62 86v6" stroke="#c9c4ea" stroke-width="3"/>
+        </svg>
+      </div>
+
+      <!-- EVENTO DO SOL (tempestade). Use .evento--poeira ou .evento--solar -->
+      <div class="evento evento--poeira" role="alert">
+        <svg class="ico" aria-hidden="true"><use href="#i-dust"/></svg>
+        <div>
+          <h2 class="evento-titulo" data-i18n="ev_poeira_titulo">Tempestade de poeira!</h2>
+          <p data-i18n="ev_poeira_texto">A poeira cobre os painéis solares. Hoje você tem <b>metade da energia</b>.</p>
+        </div>
+      </div>
+
+      <!-- Aqui entram o mesmo .painel e .energia-divisao da tela de viagem -->
+
+      <button class="btn btn-secundario" type="button" data-a="log">
+        <svg class="ico" aria-hidden="true"><use href="#i-log"/></svg>
+        <span data-i18n="ver_diario">Ver diário de bordo</span>
+      </button>
+      <button class="btn btn-principal" type="button" data-a="next" data-i18n="proximo_sol">Próximo sol ➜</button>
+    </section>
+  </template>
+
+  <!-- TELA 4: DIÁRIO DE BORDO -->
+  <template id="tpl-diario">
+    <section class="tela tela--diario" aria-labelledby="t-diario">
+      <h1 id="t-diario">
+        <svg class="ico" aria-hidden="true"><use href="#i-log"/></svg>
+        <span data-i18n="diario">Diário de bordo</span>
+      </h1>
+      <!-- Cada <li> é um turno. Classes extras mudam o ícone de borda: --poeira, --solar, --bom -->
+      <ol class="diario">
+        <li class="diario-item diario-item--poeira" data-i18n="diario_ex2"><b>Sol 7:</b> tempestade de poeira, os painéis geraram metade da energia.</li>
+        <li class="diario-item diario-item--solar" data-i18n="diario_ex3"><b>Sol 6:</b> tempestade solar! O escudo protegeu a tripulação.</li>
+        <li class="diario-item diario-item--bom" data-i18n="diario_ex4"><b>Sol 5:</b> a Yara colheu as primeiras alfaces.</li>
+      </ol>
+      <button class="btn btn-principal" type="button" data-a="back" data-i18n="voltar">Voltar para a base</button>
+    </section>
+  </template>
+
+  <!-- TELA 5: DEBRIEFING (fim de missão, sem punição) -->
+  <template id="tpl-fim">
+    <section class="tela tela--fim" aria-labelledby="t-fim">
+      <div class="medalha" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="var(--energia)"/><path d="M32 16l4.7 9.6 10.6 1.5-7.7 7.5 1.8 10.5L32 40l-9.4 5.1 1.8-10.5-7.7-7.5 10.6-1.5z" fill="#fff"/></svg>
+      </div>
+      <h1 id="t-fim" data-i18n="fim_titulo">Missão concluída!</h1>
+      <p class="lead" data-i18n="fim_lead">Vocês ficaram 30 sóis em Marte. Veja o que aprendemos.</p>
+
+      <!-- Números finais -->
+      <ul class="resumo">
+        <li><svg class="ico" aria-hidden="true"><use href="#i-sol"/></svg><b>30</b> <span data-i18n="sois">sóis</span></li>
+        <li><svg class="ico" aria-hidden="true"><use href="#i-rad"/></svg><b>42</b> mSv</li>
+        <li><svg class="ico" aria-hidden="true"><use href="#i-o2"/></svg><b>3</b> <span data-i18n="tripulantes_bem">de 3 tripulantes bem</span></li>
+      </ul>
+
+      <div class="debrief debrief--certo">
+        <h2><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg> <span data-i18n="deu_certo">Deu certo</span></h2>
+        <ul>
+          <li data-i18n="certo_ex1">Você ligou o escudo na tempestade solar. Ótima ideia!</li>
+          <li data-i18n="certo_ex2">O oxigênio nunca ficou baixo.</li>
+        </ul>
+      </div>
+
+      <div class="debrief debrief--dica">
+        <h2><svg class="ico" aria-hidden="true"><use href="#i-idea"/></svg> <span data-i18n="proxima">Para a próxima</span></h2>
+        <ul>
+          <li data-i18n="dica_ex1">A comida ficou baixa no sol 12. Plantas precisam de energia para crescer.</li>
+        </ul>
+      </div>
+
+      <button class="btn btn-principal" type="button" data-a="restart" data-i18n="jogar_de_novo">↻ Jogar de novo</button>
+    </section>
+  </template>
+
+  <!-- ===================== RODAPÉ: fontes dos dados ===================== -->
+  <footer class="rodape">
+    <p class="rodape-aviso" data-i18n="rodape_aviso"><b>Dados arquivados, não ao vivo.</b> Os números vêm de medições já publicadas pela NASA.</p>
+    <ul class="rodape-fontes">
+      <li data-i18n="fonte_rad">Radiação na viagem (~1,8 mSv/dia) e em Marte (~0,64 mSv/sol): detector <abbr title="Radiation Assessment Detector">RAD</abbr> do rover Curiosity (Zeitlin et al., 2013; Hassler et al., 2014).</li>
+      <li data-i18n="fonte_donki">Tempestades solares: arquivo <a href="https://kauai.ccmc.gsfc.nasa.gov/DONKI/" target="_blank" rel="noopener">NASA DONKI</a>.</li>
+      <li data-i18n="fonte_sol">Duração do sol (24h39min): <a href="https://mars.nasa.gov/" target="_blank" rel="noopener">NASA Mars Exploration</a>.</li>
+    </ul>
+    <p class="rodape-credito" data-i18n="credito">NASA Space Apps Challenge 2026 · Ilustrações feitas pela equipe.</p>
+  </footer>
+
+  <!-- Scripts: primeiro as traduções, depois a tela. "defer" = roda depois que a página carregou -->
+  <script src="static/js/i18n.js" defer></script>
+  <script src="static/js/main.js" defer></script>
+</body>
+</html>
