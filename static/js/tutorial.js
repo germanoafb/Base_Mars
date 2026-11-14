@@ -165,8 +165,12 @@
     const parecida = lista.filter((v) => (en ? /^en/i : /^pt/i).test(v.lang));
     const grupo = exata.length ? exata : parecida;
     if (!grupo.length) return null;
-    const bonita = /(google|francisca|luciana|fernanda|maria|vit[oó]ria|samantha|aria|jenny|ava|female|natural)/i;
-    return grupo.find((v) => bonita.test(v.name)) || grupo[0];
+
+    const nomes = en
+      ? /(google|samantha|susan|ava|jenny|female|natural|aria|daniel)/i
+      : /(google|luciana|fernanda|maria|vit[oó]ria|samantha|aria|daniel|nat[aá]lia|female|natural)/i;
+
+    return grupo.find((v) => nomes.test(v.name)) || grupo.find((v) => /pt|br|brazil/i.test(v.lang)) || grupo[0];
   }
 
   function pararFala() {
@@ -219,10 +223,12 @@
       if (i >= frases.length) { aoFalar(false); return; }
       const u = new SpeechSynthesisUtterance(frases[i++]);
       const v = escolherVoz();
-      u.lang = idiomaAtual() === "en" ? "en-US" : "pt-BR";
+      const emPt = idiomaAtual() !== "en";
+      u.lang = emPt ? "pt-BR" : "en-US";
       if (v) { try { u.voice = v; u.lang = v.lang; } catch (e) { /* voz estranha: usa a padrão do idioma */ } }
-      u.pitch = 1.35;                                // voz de robozinho simpático
-      u.rate = 1.0;
+      u.pitch = emPt ? 1.08 : 1.12;
+      u.rate = emPt ? 0.9 : 0.95;
+      u.volume = 1;
       u.onstart = () => { comecou = true; };
       u.onend = proxima;
       u.onerror = proxima;
