@@ -42,6 +42,7 @@
   /* Fontes */
   --fonte-titulo: "Baloo 2", "Trebuchet MS", sans-serif;
   --fonte-texto: "Nunito", "Segoe UI", Arial, sans-serif;
+  --fonte-logo: "Tiny5 Duo", var(--fonte-titulo);
 
   color-scheme: dark;
 }
@@ -155,10 +156,12 @@ a { color: var(--o2); }
   height: 36px;
 }
 
+/* Nome do jogo com a fonte pixelada escolhida pela equipe */
 .marca-nome {
-  font-family: var(--fonte-titulo);
-  font-weight: 800;
-  font-size: 1.35rem;
+  font-family: var(--fonte-logo);
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--marte);
   letter-spacing: .02em;
 }
 
