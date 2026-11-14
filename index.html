@@ -135,7 +135,7 @@
   </header>
 
   <!-- ===================== JOGO =====================
-    O código do jogo coloca as telas aqui dentro (innerHTML).
+    O main.js coloca as telas aqui dentro (innerHTML).
     O conteúdo abaixo é a TELA 1 (lançamento), que aparece enquanto o jogo carrega.
     Os modelos das outras telas estão nos <template> mais abaixo.
   -->
@@ -434,8 +434,16 @@
     <p class="rodape-credito" data-i18n="credito">NASA Space Apps Challenge 2026 · Ilustrações feitas pela equipe.</p>
   </footer>
 
-  <!-- Scripts: primeiro as traduções, depois a tela. "defer" = roda depois que a página carregou -->
+  <!--
+    Scripts, nesta ordem ("defer" = roda depois que a página carregou):
+    1. traduções  2. dados da NASA  3. regras do jogo  4. tela
+    São scripts comuns (não "module") para funcionar até abrindo o arquivo direto.
+  -->
   <script src="static/js/i18n.js" defer></script>
+  <script src="static/data/donki_flares.js" defer></script>
+  <script src="static/js/game/nasa-data.js" defer></script>
+  <script src="static/js/game/events.js" defer></script>
+  <script src="static/js/game/outpost.js" defer></script>
   <script src="static/js/main.js" defer></script>
 </body>
 </html>

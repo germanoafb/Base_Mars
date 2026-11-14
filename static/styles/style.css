@@ -201,7 +201,12 @@ html[lang="en"] .btn-idioma .idioma-en {
   padding: 8px 16px 32px;
 }
 
-#app:focus { outline: none; }
+#app:focus,
+#app h1:focus { outline: none; }
+
+/* Ao mexer nos botões − e +, a tela é redesenhada sem animar de novo */
+.sem-animacao,
+.sem-animacao .evento { animation: none; }
 
 /* Cada tela: coluna centralizada com espaço entre as partes */
 .tela {
@@ -663,6 +668,8 @@ html[lang="en"] .btn-idioma .idioma-en {
 
 .diario-ultimo .ico { color: var(--texto-suave); }
 
+.diario-ultimo p + p { margin-top: 6px; }
+
 .tela--diario h1 {
   display: flex;
   align-items: center;
@@ -814,7 +821,7 @@ html[lang="en"] .btn-idioma .idioma-en {
 
   /* Linha de energia vira uma linha só */
   .aloc {
-    grid-template-columns: auto 1fr auto auto auto 64px;
+    grid-template-columns: auto 1fr auto auto auto minmax(64px, auto);
     grid-template-areas: "ico nome menos pontos mais prev";
   }
 
@@ -840,6 +847,9 @@ html[lang="en"] .btn-idioma .idioma-en {
   }
 
   .tela--viagem > .mapa,
+  .tela--viagem > .evento,
+  .tela--viagem > .diario-ultimo,
+  .tela--base > .diario-ultimo,
   .tela--base > .sol-cabecalho,
   .tela--base > .cena-base,
   .tela--base > .evento,
@@ -849,4 +859,8 @@ html[lang="en"] .btn-idioma .idioma-en {
   }
 
   .tela--viagem > .mapa { order: -1; }
+
+  /* No grid, os botões ficam centralizados */
+  .tela--viagem > .btn,
+  .tela--base > .btn { justify-self: center; }
 }

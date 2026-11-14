@@ -27,6 +27,8 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 SAIDA = RAIZ / "static" / "data" / "donki_flares.json"
+# Versão para o navegador: um .js que funciona até abrindo o index.html direto (sem servidor)
+SAIDA_JS = RAIZ / "static" / "data" / "donki_flares.js"
 # Dois endereços para os mesmos dados: primeiro o servidor da DONKI no CCMC
 # (ccmc.gsfc.nasa.gov, não precisa de chave); se falhar, o api.nasa.gov (usa a chave).
 URL_CCMC = "https://ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR"
@@ -121,6 +123,29 @@ def limpar(flare):
     }
 
 
+def salvar_js(dados):
+    """Salva só as erupções fortes (M e X), no formato que o jogo usa, como window.DONKI_FLARES."""
+    fortes = [
+        {"id": e["id"], "pico": e["pico"] or e["inicio"], "classe": e["classe"], "nivel": e["nivel"], "link": e["link"]}
+        for e in dados["eventos"]
+        if e["nivel"] in ("M", "X")
+    ]
+    pacote = {
+        "fonte": dados["fonte"],
+        "sobre": dados["sobre"],
+        "baixadoEm": dados["baixadoEm"],
+        "periodo": dados["periodo"],
+        "eventos": fortes,
+    }
+    texto = json.dumps(pacote, ensure_ascii=False, separators=(",", ":"))
+    SAIDA_JS.write_text(
+        "// Gerado por scripts_backend/fetch_donki.py. Não edite à mão.\n"
+        f"window.DONKI_FLARES = {texto};\n",
+        encoding="utf-8",
+    )
+    return len(fortes)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Baixa erupções solares da NASA DONKI.")
     parser.add_argument("--inicio", default=INICIO_PADRAO, help="data inicial AAAA-MM-DD")
@@ -165,6 +190,8 @@ def main():
     SAIDA.parent.mkdir(parents=True, exist_ok=True)
     SAIDA.write_text(json.dumps(dados, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Pronto! {len(eventos)} erupções salvas em {SAIDA.relative_to(RAIZ)} {dados['porNivel']}")
+    n = salvar_js(dados)
+    print(f"E {n} erupções fortes (M e X) em {SAIDA_JS.relative_to(RAIZ)} para o jogo")
 
 
 if __name__ == "__main__":
