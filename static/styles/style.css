@@ -43,9 +43,20 @@ p {
 }
 
 .logo {
-    color: #ff8c42;
-    font-size: 24px;
-    font-weight: bold;
+    font-family: 'Tiny5 Duo', sans-serif;
+    font-size: 32px;
+    color: #ff6a3d;
+}
+
+.apresentacao {
+    text-align: center;
+}
+
+.apresentacao h1 {
+    font-family: 'Tiny5 Duo', sans-serif;
+    font-size: 64px;
+    color: #ff473dfd;
+    margin-bottom: 10px;
 }
 
 .informacoes {
