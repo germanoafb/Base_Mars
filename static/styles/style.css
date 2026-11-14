@@ -39,7 +39,7 @@
   /* Pixel art: borda grossa e sombra dura (sem cantos redondos) */
   --borda: 4px;
   --bloco: 4px 4px 0 var(--sombra);
-  --toque: 48px;             /* tamanho mínimo de botão (acima dos 44px pedidos) */
+  --toque: 3rem;             /* tamanho mínimo de botão (48px no padrão, cresce com a tela) */
 
   /* Fontes */
   --fonte-titulo: "Press Start 2P", "Courier New", monospace;   /* textos curtos */
@@ -59,7 +59,10 @@
   padding: 0;
 }
 
-html { -webkit-text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  font-size: 112.5%;   /* celular: 18px (antes 16px). Tudo que está em rem cresce junto */
+}
 
 /* Fundo: céu escuro com algumas estrelas quadradinhas */
 body {
@@ -145,14 +148,14 @@ a { color: var(--o2); }
   justify-content: space-between;
   gap: 12px;
   padding: 12px 16px;
-  max-width: 760px;
+  max-width: 47.5rem;
   width: 100%;
   margin: 0 auto;
 }
 
 .marca { display: flex; align-items: center; gap: 10px; min-width: 0; }
 
-.marca-planeta { width: 32px; height: 32px; image-rendering: pixelated; }
+.marca-planeta { width: 2rem; height: 2rem; image-rendering: pixelated; }
 
 .marca-nome {
   font-family: var(--fonte-logo);
@@ -193,7 +196,7 @@ html[lang="en"] .btn-idioma .idioma-en {
 #app {
   flex: 1;
   width: 100%;
-  max-width: 760px;
+  max-width: 47.5rem;
   margin: 0 auto;
   padding: 4px 16px 32px;
 }
@@ -224,8 +227,8 @@ html[lang="en"] .btn-idioma .idioma-en {
 
 /* ---------- 5. BOTÕES ---------- */
 .btn {
-  min-height: 56px;
-  padding: 12px 18px;
+  min-height: 3.5rem;
+  padding: .75rem 1.1rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -301,7 +304,7 @@ html[lang="en"] .btn-idioma .idioma-en {
   width: 100%;
 }
 
-.tripulacao li { flex: 1 1 96px; max-width: 160px; display: flex; }
+.tripulacao li { flex: 1 1 6rem; max-width: 10rem; display: flex; }
 
 /* Cartão do astronauta = botão para escolher o personagem */
 .astronauta {
@@ -331,7 +334,7 @@ html[lang="en"] .btn-idioma .idioma-en {
   box-shadow: 0 0 0 3px var(--traje), var(--bloco);
 }
 
-.astronauta .rosto-svg { width: 64px; height: 64px; }
+.astronauta .rosto-svg { width: 4rem; height: 4rem; }
 
 .astronauta-nome { font: .75rem var(--fonte-titulo); }
 .astronauta-papel { font-size: 1rem; color: var(--texto-suave); }
@@ -344,7 +347,7 @@ html[lang="en"] .btn-idioma .idioma-en {
 
 .astronauta--escolhido .astronauta-voce { color: var(--traje); }
 
-.tela--lancamento .btn-principal { max-width: 380px; }
+.tela--lancamento .btn-principal { max-width: 23.75rem; }
 
 
 /* ---------- 7. MAPA EM PIXEL ART (canvas) ---------- */
@@ -358,7 +361,7 @@ html[lang="en"] .btn-idioma .idioma-en {
   touch-action: manipulation;
 }
 
-.mapa-canvas--enfeite { cursor: default; max-width: 520px; }
+.mapa-canvas--enfeite { cursor: default; max-width: 32.5rem; }
 
 /* Selo de ciência: pontos enviados / meta */
 .selo-ciencia {
@@ -432,8 +435,8 @@ html[lang="en"] .btn-idioma .idioma-en {
 }
 
 .rosto-svg {
-  width: 40px;
-  height: 40px;
+  width: 2.5rem;
+  height: 2.5rem;
   image-rendering: pixelated;
   border: 3px solid var(--traje, var(--linha));
   background: var(--fundo);
@@ -582,7 +585,7 @@ html[lang="en"] .btn-idioma .idioma-en {
 /* Trilho em blocos, como barra de vida de videogame */
 .barra-trilho {
   position: relative;
-  height: 12px;
+  height: .75rem;
   background: #000;
   border: 2px solid var(--linha);
   overflow: hidden;
@@ -661,7 +664,7 @@ html[lang="en"] .btn-idioma .idioma-en {
   z-index: 30;
   top: calc(100% + 8px);
   right: -6px;
-  width: min(280px, calc(100vw - 48px));
+  width: min(17.5rem, calc(100vw - 48px));
   padding: 8px 10px;
   background: var(--texto);
   color: var(--fundo);
@@ -702,7 +705,7 @@ html[lang="en"] .btn-idioma .idioma-en {
 .escolhas { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
 
 .btn-escolha {
-  min-height: 56px;
+  min-height: 3.5rem;
   width: 100%;
   padding: 10px 12px;
   display: flex;
@@ -785,7 +788,7 @@ html[lang="en"] .btn-idioma .idioma-en {
 
 /* Estrelas: 3 = missão cumprida, 2 = todos voltaram bem, 1 = encerrada mais cedo */
 .medalha { display: flex; gap: 8px; }
-.estrela { width: 48px; height: 48px; color: var(--linha); }
+.estrela { width: 3rem; height: 3rem; color: var(--linha); }
 .estrela--on { color: var(--energia); animation: pular .4s steps(4) backwards; }
 .estrela--on:nth-child(2) { animation-delay: .15s; }
 .estrela--on:nth-child(3) { animation-delay: .3s; }
@@ -830,13 +833,13 @@ html[lang="en"] .btn-idioma .idioma-en {
 .debrief ul { padding-left: 1.2em; }
 .debrief li + li { margin-top: 6px; }
 
-.tela--fim .btn-principal { max-width: 380px; }
+.tela--fim .btn-principal { max-width: 23.75rem; }
 
 
 /* ---------- 14. RODAPÉ (fontes dos dados) ---------- */
 .rodape {
   width: 100%;
-  max-width: 760px;
+  max-width: 47.5rem;
   margin: 0 auto;
   padding: 20px 16px 28px;
   font-size: .95rem;
@@ -1028,25 +1031,28 @@ html[lang="en"] .btn-idioma .idioma-en {
   #app { padding: 8px 24px 40px; }
 
   .btn-principal,
-  .btn-secundario { max-width: 420px; align-self: center; }
+  .btn-secundario { max-width: 26.25rem; align-self: center; }
 }
 
 /* Computador e tablet deitado: mapa à esquerda, painel à direita, sem rolar */
 @media (min-width: 900px) and (min-height: 540px) {
-  .topo { max-width: 1280px; padding: 8px 24px; }
-  #app { max-width: 1280px; padding: 0 24px 16px; }
+  /* Escala com a tela: ~18px em notebook, até 24px em monitor grande */
+  html { font-size: clamp(16px, min(1.4vw, 2.3vh), 24px); }
 
-  .tela--jogo { min-height: calc(100dvh - 76px); }
+  .topo { max-width: 80rem; padding: 8px 24px; }
+  #app { max-width: 80rem; padding: 0 24px 16px; }
 
-  .jogo-grade { flex-direction: row; align-items: center; gap: 16px; min-height: calc(100dvh - 92px); }
+  .tela--jogo { min-height: calc(100dvh - var(--toque) - 28px); }
+
+  .jogo-grade { flex-direction: row; align-items: center; gap: 16px; min-height: calc(100dvh - var(--toque) - 44px); }
 
   .jogo-esquerda { flex: 1 1 auto; min-width: 0; min-height: 0; }
 
   /* Mapa e tripulação juntos, centralizados; o mapa cresce até caber na altura (16:9) */
   .jogo-esquerda { justify-content: center; }
-  .mapa-moldura { width: min(100%, calc((100dvh - 230px) * 16 / 9)); }
+  .mapa-moldura { width: min(100%, calc((100dvh - 14.4rem) * 16 / 9)); }
 
-  .jogo-direita { flex: 0 0 440px; }
+  .jogo-direita { flex: 0 0 27.5rem; }
 
   .jogo-acoes { position: static; padding: 0; }
 
@@ -1068,17 +1074,16 @@ html[lang="en"] .btn-idioma .idioma-en {
   }
 
   .carta-camada .evento { width: 100%; }
-  .rosto-svg { width: 48px; height: 48px; }
+  .rosto-svg { width: 3rem; height: 3rem; }
+
+  /* Painel largo: botões − e + e pontinhos de energia maiores */
+  .sistema .btn-passo { width: 2.75rem; height: 2.75rem; }
+  .aloc-pontos i { width: .7rem; height: 1.3rem; }
 
   /* Lançamento também lado a lado */
-  .tela--lancamento { flex-direction: row; align-items: center; text-align: left; gap: 32px; min-height: calc(100dvh - 76px); }
+  .tela--lancamento { flex-direction: row; align-items: center; text-align: left; gap: 32px; min-height: calc(100dvh - var(--toque) - 28px); }
   .tela--lancamento .mapa-canvas--enfeite { flex: 1 1 55%; max-width: none; }
   .lancamento-texto { flex: 1 1 45%; display: flex; flex-direction: column; gap: 14px; }
   .lancamento-texto .tripulacao { justify-content: flex-start; }
   .lancamento-texto .btn-principal { align-self: flex-start; }
 }
-
-
-/* Botões do topo (som + idioma) */
-.topo-botoes { display: flex; align-items: center; gap: 10px; }
-.btn-som { min-width: 48px; font-size: 18px; }
