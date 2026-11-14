@@ -116,7 +116,7 @@
   <!--
     SOM DO JOGO (tudo aqui mesmo, sem arquivo extra e sem mexer no main.js).
     - Efeitos (bipes): gerados por código.
-    - Música de fundo: trilha ambiente de espaço, também gerada por código (sem mp3).
+    - Música de fundo: trilha alegre de espaço (estilo caixinha de música), também gerada por código (sem mp3).
       Quer usar um mp3 seu? Coloque em static/assets/audio/ e escreva o caminho em MUSICA_MP3 abaixo.
     - O navegador só libera som depois do 1º clique, por isso tudo começa num clique.
   -->
@@ -124,7 +124,7 @@
   (function () {
     "use strict";
     var MUSICA_MP3 = "";            // ex.: "static/assets/audio/musica.mp3" (vazio = trilha gerada)
-    var VOLUME_MUSICA = 0.3;        // 0 a 1: mexa aqui se a música estiver alta ou baixa
+    var VOLUME_MUSICA = 0.5;        // 0 a 1: mexa aqui se a música estiver alta ou baixa
 
     var CHAVE = "ares_mudo";
     var mudo = false;
@@ -162,70 +162,122 @@
       alarme: function () { bip(220, 0.15, "sawtooth"); setTimeout(function () { bip(180, 0.2, "sawtooth"); }, 160); }
     };
 
-    // ---------- Música de espaço (gerada) ----------
-    // Quatro acordes suaves que se repetem, cada um dura ~8 segundos e se mistura com o próximo.
-    var ACORDES = [
-      [110.00, 164.81, 246.94, 329.63],   // Lá menor (com 9ª)
-      [87.31, 130.81, 220.00, 329.63],    // Fá maior com 7ª
-      [130.81, 196.00, 246.94, 329.63],   // Dó maior com 7ª
-      [82.41, 123.47, 146.83, 196.00]     // Mi menor com 7ª
+    // ---------- Música de espaço para crianças (gerada) ----------
+    // Tom maior e alegre: sons de caixinha de música, ritmo leve e uma melodia de "estrelinhas".
+    // São 4 acordes (Dó, Sol, Lá menor, Fá) que se repetem, um por compasso.
+    var BPM = 100;
+    var BATIDA = 60 / BPM;
+    var COMPASSO = BATIDA * 4;
+    var CORDAS = [
+      { arp: [261.63, 329.63, 392.00, 523.25, 659.25], pad: [261.63, 329.63, 392.00], baixo: 130.81 },  // Dó
+      { arp: [196.00, 246.94, 293.66, 392.00, 493.88], pad: [246.94, 293.66, 392.00], baixo: 98.00 },   // Sol
+      { arp: [220.00, 261.63, 329.63, 440.00, 523.25], pad: [261.63, 329.63, 440.00], baixo: 110.00 },  // Lá menor
+      { arp: [174.61, 220.00, 261.63, 349.23, 440.00], pad: [261.63, 349.23, 440.00], baixo: 87.31 }    // Fá
     ];
-    var BRILHOS = [659.25, 783.99, 880.00, 987.77, 1174.66];   // notinhas agudas, tipo estrelas
+    var VAIVEM = [0, 1, 2, 3, 4, 3, 2, 1];                              // sobe e desce nas notas do acorde
+    var ESTRELAS = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];   // Dó, Ré, Mi, Sol, Lá, Dó agudo
     var mus = null;
 
     function criarMusica(c) {
       var bus = c.createGain();
       bus.gain.value = 0;
       bus.connect(c.destination);
-      // Eco longo = sensação de espaço vazio
-      var eco = c.createDelay(2);
-      eco.delayTime.value = 0.55;
+      // Eco curtinho, no ritmo da música (deixa o som "flutuando")
+      var eco = c.createDelay(1);
+      eco.delayTime.value = BATIDA / 2;
       var volta = c.createGain();
-      volta.gain.value = 0.5;
+      volta.gain.value = 0.3;
       var ecoSaida = c.createGain();
-      ecoSaida.gain.value = 0.6;
+      ecoSaida.gain.value = 0.4;
       eco.connect(volta); volta.connect(eco);
       eco.connect(ecoSaida); ecoSaida.connect(bus);
-      return { bus: bus, eco: eco, timer: null, i: 0, ativo: false, mp3: null };
+      return { bus: bus, eco: eco, timer: null, i: 0, ativo: false, mp3: null, proxima: 0, mel: 2 };
     }
 
-    // Uma nota longa e suave (entra devagar, sai devagar)
-    function voz(freq, t0, dur, ganho, tipo, envioEco) {
+    // Som de caixinha de música: nota brilhante que some rápido
+    function sino(freq, t0, dur, ganho, envioEco) {
       var c = ctx;
-      var osc = c.createOscillator();
-      var filtro = c.createBiquadFilter();
       var g = c.createGain();
-      osc.type = tipo;
-      osc.frequency.value = freq;
-      filtro.type = "lowpass";
-      filtro.frequency.value = 900;
       g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(ganho, t0 + dur * 0.3);
-      g.gain.linearRampToValueAtTime(0, t0 + dur);
-      osc.connect(filtro); filtro.connect(g);
+      g.gain.linearRampToValueAtTime(ganho, t0 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      [[1, 1], [2, 0.3], [4, 0.08]].forEach(function (par) {
+        var osc = c.createOscillator();
+        var parcial = c.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq * par[0];
+        parcial.gain.value = par[1];
+        osc.connect(parcial); parcial.connect(g);
+        osc.start(t0);
+        osc.stop(t0 + dur + 0.05);
+      });
       g.connect(mus.bus);
       if (envioEco) {
         var envio = c.createGain();
         envio.gain.value = envioEco;
         g.connect(envio); envio.connect(mus.eco);
       }
-      osc.start(t0);
-      osc.stop(t0 + dur + 0.1);
     }
 
-    function proximoAcorde() {
-      if (!mus || !mus.ativo) return;
-      var t = ctx.currentTime;
-      var acorde = ACORDES[mus.i % ACORDES.length];
+    // Tapete suave de fundo (entra e sai devagarinho)
+    function tapete(freq, t0, dur, ganho) {
+      var c = ctx;
+      var osc = c.createOscillator();
+      var filtro = c.createBiquadFilter();
+      var g = c.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      filtro.type = "lowpass";
+      filtro.frequency.value = 1200;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(ganho, t0 + 0.4);
+      g.gain.linearRampToValueAtTime(0, t0 + dur);
+      osc.connect(filtro); filtro.connect(g); g.connect(mus.bus);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.05);
+    }
+
+    // Baixinho redondo, tipo "bloop"
+    function baixo(freq, t0, ganho) {
+      var c = ctx;
+      var osc = c.createOscillator();
+      var g = c.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(ganho, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.45);
+      osc.connect(g); g.connect(mus.bus);
+      osc.start(t0);
+      osc.stop(t0 + 0.5);
+    }
+
+    // Toca um compasso inteiro (4 batidas = 8 notinhas)
+    function tocarCompasso(t0) {
+      var c = CORDAS[mus.i % CORDAS.length];
       mus.i += 1;
-      acorde.forEach(function (f, k) {
-        voz(f, t, 11, 0.045, k === 0 ? "triangle" : "sine", 0.3);
-        voz(f * 1.004, t, 11, 0.025, "sine", 0.3);       // levemente desafinada: som mais "largo"
-      });
-      // 3 brilhos de estrela em momentos diferentes
-      for (var s = 0; s < 3; s++) {
-        var nota = BRILHOS[Math.floor(Math.random() * BRILHOS.length)];
-        voz(nota, t + 1 + Math.random() * 6, 4, 0.03, "sine", 0.9);
+      c.pad.forEach(function (f) { tapete(f, t0, COMPASSO + 0.3, 0.02); });
+      baixo(c.baixo, t0, 0.12);
+      baixo(c.baixo, t0 + BATIDA * 2, 0.08);
+      for (var s = 0; s < 8; s++) {
+        var t = t0 + s * (BATIDA / 2);
+        sino(c.arp[VAIVEM[s]], t, 0.8, 0.05, 0.4);
+        // Melodia de estrelinhas: anda pra cima e pra baixo, só em alguns tempos
+        var chance = s === 0 ? 0.8 : s === 4 ? 0.65 : s === 6 ? 0.35 : 0;
+        if (Math.random() < chance) {
+          var passo = [-2, -1, -1, 0, 1, 1, 2][Math.floor(Math.random() * 7)];
+          mus.mel = Math.max(0, Math.min(ESTRELAS.length - 1, mus.mel + passo));
+          sino(ESTRELAS[mus.mel], t, s === 0 ? 1.4 : 0.9, 0.075, 0.5);
+        }
+      }
+    }
+
+    // Agenda os compassos um pouquinho antes da hora (não perde o ritmo se a aba travar)
+    function agendar() {
+      if (!mus || !mus.ativo) return;
+      while (mus.proxima < ctx.currentTime + COMPASSO) {
+        tocarCompasso(mus.proxima);
+        mus.proxima += COMPASSO;
       }
     }
 
@@ -242,9 +294,10 @@
         if (!mus) mus = criarMusica(c);
         if (mus.ativo) return;
         mus.ativo = true;
-        mus.bus.gain.setTargetAtTime(VOLUME_MUSICA, c.currentTime, 1.5);   // entra devagar
-        proximoAcorde();
-        mus.timer = setInterval(proximoAcorde, 8000);
+        mus.proxima = c.currentTime + 0.1;
+        mus.bus.gain.setTargetAtTime(VOLUME_MUSICA, c.currentTime, 0.3);   // entra rapidinho
+        agendar();
+        mus.timer = setInterval(agendar, 500);
       } catch (e) {}
     }
 
@@ -253,7 +306,7 @@
       mus.ativo = false;
       if (mus.mp3) { mus.mp3.pause(); return; }
       clearInterval(mus.timer);
-      mus.bus.gain.setTargetAtTime(0, ctx.currentTime, 0.4);              // some devagar
+      mus.bus.gain.setTargetAtTime(0, ctx.currentTime, 0.2);               // some suave
     }
 
     // Economiza bateria: pausa a trilha quando a aba fica escondida
