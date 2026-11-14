@@ -103,7 +103,7 @@
 
   <!--
     Scripts, nesta ordem ("defer" = roda depois que a página carregou):
-    1. traduções  2. dados da NASA  3. regras do jogo  4. mapa em pixel art  5. tela
+    1. traduções  2. dados da NASA  3. regras do jogo  4. mapa em pixel art  5. minigames  6. tela
     São scripts comuns (não "module") para funcionar até abrindo o arquivo direto.
   -->
   <script src="static/js/i18n.js" defer></script>
@@ -112,6 +112,7 @@
   <script src="static/js/game/events.js" defer></script>
   <script src="static/js/game/outpost.js" defer></script>
   <script src="static/js/mapa.js" defer></script>
+  <script src="static/js/minigames.js" defer></script>
   <script src="static/js/main.js" defer></script>
   <!--
     SOM DO JOGO (tudo aqui mesmo, sem arquivo extra e sem mexer no main.js).
@@ -159,6 +160,9 @@
       menos: function () { bip(440); },
       escolha: function () { bip(523); setTimeout(function () { bip(784, 0.12); }, 80); },
       proximo: function () { bip(392); setTimeout(function () { bip(523); }, 70); setTimeout(function () { bip(659, 0.15); }, 140); },
+      acerto: function () { bip(880, 0.05); },
+      erro: function () { bip(150, 0.12, "sawtooth"); },
+      fim: function () { bip(523, 0.1); setTimeout(function () { bip(659, 0.1); }, 90); setTimeout(function () { bip(784, 0.2); }, 180); },
       alarme: function () { bip(220, 0.15, "sawtooth"); setTimeout(function () { bip(180, 0.2, "sawtooth"); }, 160); }
     };
 

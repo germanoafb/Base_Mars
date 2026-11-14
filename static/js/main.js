@@ -7,7 +7,7 @@
 //   esquerda = mapa (com placar por cima) + tripulação
 //   direita  = energia, 4 sistemas, 3 barras e o botão "Próximo"
 //
-// Ordem dos scripts no index.html: i18n.js → dados → game/*.js → mapa.js → main.js
+// Ordem dos scripts no index.html: i18n.js → dados → game/*.js → mapa.js → minigames.js → main.js
 
 (function () {
   "use strict";
@@ -230,17 +230,29 @@
   // ---------- Carta de decisão (aparece por cima do mapa) ----------
   const ICONE_EVENTO = { poeira: "i-dust", solar: "i-flare", filtro: "i-o2", praga: "i-food" };
 
-  // Chips com o efeito de cada opção: ícone + número (nunca só cor)
-  function chipsEfeito(ef) {
+  // Chips com o efeito de cada opção: ícone + número (nunca só cor).
+  // Com "ef2" mostra uma FAIXA (do pior ao melhor resultado do minigame): "+1…+4".
+  const sinal = (n) => (n > 0 ? "+" : "−") + Math.abs(n);
+  const EFEITO_META = {
+    o2: { icone: "i-o2", nome: "oxigenio", neutro: 0, texto: (v) => sinal(v), bom: (v) => v > 0 },
+    consumoO2: { icone: "i-o2", nome: "oxigenio", neutro: 0, texto: (v) => sinal(-v), bom: (v) => v < 0 },
+    comida: { icone: "i-food", nome: "comida", neutro: 0, texto: (v) => sinal(v), bom: (v) => v > 0 },
+    energia: { icone: "i-energy", nome: "energia", neutro: 0, texto: (v) => sinal(v), bom: (v) => v > 0 },
+    tempestade: { icone: "i-rad", nome: "radiacao", neutro: 1, texto: (v) => `−${Math.round((1 - v) * 100)}%`, bom: () => true },
+  };
+
+  function chipsEfeito(ef, ef2) {
     const itens = [];
-    const add = (icone, nomeChave, texto, bom) =>
-      itens.push(`<span class="efeito efeito--${bom ? "bom" : "ruim"}">${ico(icone)}<span class="sr-only">${t(nomeChave)}</span> ${texto}</span>`);
-    const sinal = (n) => (n > 0 ? "+" : "−") + Math.abs(n);
-    if (ef.o2) add("i-o2", "oxigenio", sinal(ef.o2), ef.o2 > 0);
-    if (ef.consumoO2) add("i-o2", "oxigenio", sinal(-ef.consumoO2), ef.consumoO2 < 0);
-    if (ef.comida) add("i-food", "comida", sinal(ef.comida), ef.comida > 0);
-    if (ef.energia) add("i-energy", "energia", sinal(ef.energia), ef.energia > 0);
-    if (ef.tempestade !== undefined) add("i-rad", "radiacao", `−${Math.round((1 - ef.tempestade) * 100)}%`, true);
+    const chaves = new Set([...Object.keys(ef), ...Object.keys(ef2 || {})].filter((k) => EFEITO_META[k]));
+    for (const k of chaves) {
+      const m = EFEITO_META[k];
+      const a = ef[k] ?? m.neutro;
+      const b = ef2 ? (ef2[k] ?? m.neutro) : a;
+      if (a === m.neutro && b === m.neutro) continue;             // não muda nada: sem chip
+      const texto = a === b ? m.texto(a) : `${m.texto(a)}…${m.texto(b)}`;
+      const tom = m.bom(a) && m.bom(b) ? "bom" : !m.bom(a) && !m.bom(b) ? "ruim" : "variavel";
+      itens.push(`<span class="efeito efeito--${tom}">${ico(m.icone)}<span class="sr-only">${t(m.nome)}</span> ${texto}</span>`);
+    }
     return itens.length ? itens.join("") : `<span class="efeito efeito--neutro">${t("efeito_nenhum")}</span>`;
   }
 
@@ -250,11 +262,16 @@
     const texto = ev.tipo === "solar"
       ? t("ev_solar_texto", { classe: esc(ev.classe), data: dataCurta(ev.data) })
       : t(`ev_${ev.tipo}_texto`);
-    const opcoes = (ev.opcoes || []).map((id) => `
-          <button class="btn-escolha" type="button" data-a="choose" data-id="${id}">
+    const E = window.ARES.eventos;
+    const opcoes = (ev.opcoes || []).map((id) => {
+      const faixa = E.faixaDe(ev.tipo, id);          // opção com minigame: mostra do pior ao melhor
+      const chips = faixa ? chipsEfeito(faixa.pior, faixa.melhor) : chipsEfeito(E.efeitoDe(ev.tipo, id));
+      return `
+          <button class="btn-escolha${faixa ? " btn-escolha--mini" : ""}" type="button" data-a="choose" data-id="${id}">
             <span class="escolha-texto">${t("op_" + id)}</span>
-            <span class="escolha-efeitos">${chipsEfeito(window.ARES.eventos.efeitoDe(ev.tipo, id))}</span>
-          </button>`).join("");
+            <span class="escolha-efeitos">${faixa ? `<span class="selo-mini">▶ ${t("mini_selo")}</span>` : ""}${chips}</span>
+          </button>`;
+    }).join("");
     return `
       <div class="carta-camada">
         <div class="evento evento--${ev.tipo}" role="group" aria-labelledby="ev-titulo">
@@ -273,7 +290,8 @@
   function seloDecisao(e) {
     const ev = e.evento;
     if (!ev || !ev.visivel || !ev.escolha) return "";
-    return `<p class="selo-decisao evento--${ev.tipo}">${ico(ICONE_EVENTO[ev.tipo] || "i-flare")} <b>${t(`ev_${ev.tipo}_titulo`)}</b> ${t("op_" + ev.escolha)}</p>`;
+    const nota = ev.desempenho != null ? ` (${Math.round(ev.desempenho * 100)}%)` : "";
+    return `<p class="selo-decisao evento--${ev.tipo}">${ico(ICONE_EVENTO[ev.tipo] || "i-flare")} <b>${t(`ev_${ev.tipo}_titulo`)}</b> ${t("op_" + ev.escolha)}${nota}</p>`;
   }
 
   // ---------- Tripulação viva: humor de cada um + uma fala ----------
@@ -529,9 +547,26 @@
       ui.recemAvancou = false;
       desenhar({ quieto: true, foco: `.sistema [data-a="adj"][data-k="${k}"][data-d="${d}"]` });
     } else if (acao === "choose") {
-      J.escolher(ui.jogo, botao.dataset.id);
-      ui.recemAvancou = false;
-      desenhar({ quieto: true, foco: '[data-a="next"]' });
+      const e = ui.jogo;
+      const id = botao.dataset.id;
+      const ev = e.evento;
+      const E = window.ARES.eventos;
+      const jogo = ev ? E.minigameDe(ev.tipo, id) : null;
+      const concluir = (nota) => {                  // nota = null: pulou, vale o resultado médio
+        J.escolher(e, id, nota ?? undefined);
+        ui.recemAvancou = false;
+        desenhar({ quieto: true, foco: '[data-a="next"]' });
+      };
+      if (jogo && window.MINIGAMES) {
+        window.MINIGAMES.iniciar({
+          jogo,
+          tipo: ev.tipo,
+          efeitoHtml: (nota) => chipsEfeito(E.efeitoDe(ev.tipo, id, nota)),
+          aoTerminar: concluir,
+        });
+      } else {
+        concluir(null);
+      }
     } else if (acao === "log") {
       ui.tela = "diario";
       desenhar({ foco: "titulo" });
