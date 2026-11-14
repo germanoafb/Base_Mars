@@ -65,12 +65,17 @@
       <span class="marca-nome">Projeto Ares</span>
     </div>
 
-    <!-- Botão de idioma: o main.js troca todos os textos -->
-    <button class="btn-idioma" type="button" data-a="lang" aria-label="Mudar idioma / Change language">
-      <span class="idioma-pt" lang="pt-BR">PT</span>
-      <span class="idioma-sep" aria-hidden="true">/</span>
-      <span class="idioma-en" lang="en">EN</span>
-    </button>
+    <div class="topo-botoes">
+      <!-- Botão de som: o main.js liga e desliga -->
+      <button class="btn-idioma btn-som" type="button" data-a="mute" aria-label="Desligar o som / Sound off" aria-pressed="false">♪</button>
+
+      <!-- Botão de idioma: o main.js troca todos os textos -->
+      <button class="btn-idioma" type="button" data-a="lang" aria-label="Mudar idioma / Change language">
+        <span class="idioma-pt" lang="pt-BR">PT</span>
+        <span class="idioma-sep" aria-hidden="true">/</span>
+        <span class="idioma-en" lang="en">EN</span>
+      </button>
+    </div>
   </header>
 
   <!-- ===================== JOGO =====================
@@ -108,5 +113,200 @@
   <script src="static/js/game/outpost.js" defer></script>
   <script src="static/js/mapa.js" defer></script>
   <script src="static/js/main.js" defer></script>
+  <!--
+    SOM DO JOGO (tudo aqui mesmo, sem arquivo extra e sem mexer no main.js).
+    - Efeitos (bipes): gerados por código.
+    - Música de fundo: trilha ambiente de espaço, também gerada por código (sem mp3).
+      Quer usar um mp3 seu? Coloque em static/assets/audio/ e escreva o caminho em MUSICA_MP3 abaixo.
+    - O navegador só libera som depois do 1º clique, por isso tudo começa num clique.
+  -->
+  <script>
+  (function () {
+    "use strict";
+    var MUSICA_MP3 = "";            // ex.: "static/assets/audio/musica.mp3" (vazio = trilha gerada)
+    var VOLUME_MUSICA = 0.3;        // 0 a 1: mexa aqui se a música estiver alta ou baixa
+
+    var CHAVE = "ares_mudo";
+    var mudo = false;
+    try { mudo = localStorage.getItem(CHAVE) === "1"; } catch (e) {}
+
+    var ctx = null;
+    function audioCtx() {
+      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === "suspended") ctx.resume();
+      return ctx;
+    }
+
+    // ---------- Efeitos (bipes) ----------
+    function bip(freq, dur, tipo) {
+      if (mudo) return;
+      try {
+        var c = audioCtx();
+        var osc = c.createOscillator();
+        var vol = c.createGain();
+        osc.type = tipo || "square";
+        osc.frequency.value = freq;
+        vol.gain.setValueAtTime(0.08, c.currentTime);
+        vol.gain.exponentialRampToValueAtTime(0.001, c.currentTime + (dur || 0.08));
+        osc.connect(vol).connect(c.destination);
+        osc.start();
+        osc.stop(c.currentTime + (dur || 0.08));
+      } catch (e) {}
+    }
+
+    var SONS = {
+      mais: function () { bip(660); },
+      menos: function () { bip(440); },
+      escolha: function () { bip(523); setTimeout(function () { bip(784, 0.12); }, 80); },
+      proximo: function () { bip(392); setTimeout(function () { bip(523); }, 70); setTimeout(function () { bip(659, 0.15); }, 140); },
+      alarme: function () { bip(220, 0.15, "sawtooth"); setTimeout(function () { bip(180, 0.2, "sawtooth"); }, 160); }
+    };
+
+    // ---------- Música de espaço (gerada) ----------
+    // Quatro acordes suaves que se repetem, cada um dura ~8 segundos e se mistura com o próximo.
+    var ACORDES = [
+      [110.00, 164.81, 246.94, 329.63],   // Lá menor (com 9ª)
+      [87.31, 130.81, 220.00, 329.63],    // Fá maior com 7ª
+      [130.81, 196.00, 246.94, 329.63],   // Dó maior com 7ª
+      [82.41, 123.47, 146.83, 196.00]     // Mi menor com 7ª
+    ];
+    var BRILHOS = [659.25, 783.99, 880.00, 987.77, 1174.66];   // notinhas agudas, tipo estrelas
+    var mus = null;
+
+    function criarMusica(c) {
+      var bus = c.createGain();
+      bus.gain.value = 0;
+      bus.connect(c.destination);
+      // Eco longo = sensação de espaço vazio
+      var eco = c.createDelay(2);
+      eco.delayTime.value = 0.55;
+      var volta = c.createGain();
+      volta.gain.value = 0.5;
+      var ecoSaida = c.createGain();
+      ecoSaida.gain.value = 0.6;
+      eco.connect(volta); volta.connect(eco);
+      eco.connect(ecoSaida); ecoSaida.connect(bus);
+      return { bus: bus, eco: eco, timer: null, i: 0, ativo: false, mp3: null };
+    }
+
+    // Uma nota longa e suave (entra devagar, sai devagar)
+    function voz(freq, t0, dur, ganho, tipo, envioEco) {
+      var c = ctx;
+      var osc = c.createOscillator();
+      var filtro = c.createBiquadFilter();
+      var g = c.createGain();
+      osc.type = tipo;
+      osc.frequency.value = freq;
+      filtro.type = "lowpass";
+      filtro.frequency.value = 900;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(ganho, t0 + dur * 0.3);
+      g.gain.linearRampToValueAtTime(0, t0 + dur);
+      osc.connect(filtro); filtro.connect(g);
+      g.connect(mus.bus);
+      if (envioEco) {
+        var envio = c.createGain();
+        envio.gain.value = envioEco;
+        g.connect(envio); envio.connect(mus.eco);
+      }
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.1);
+    }
+
+    function proximoAcorde() {
+      if (!mus || !mus.ativo) return;
+      var t = ctx.currentTime;
+      var acorde = ACORDES[mus.i % ACORDES.length];
+      mus.i += 1;
+      acorde.forEach(function (f, k) {
+        voz(f, t, 11, 0.045, k === 0 ? "triangle" : "sine", 0.3);
+        voz(f * 1.004, t, 11, 0.025, "sine", 0.3);       // levemente desafinada: som mais "largo"
+      });
+      // 3 brilhos de estrela em momentos diferentes
+      for (var s = 0; s < 3; s++) {
+        var nota = BRILHOS[Math.floor(Math.random() * BRILHOS.length)];
+        voz(nota, t + 1 + Math.random() * 6, 4, 0.03, "sine", 0.9);
+      }
+    }
+
+    function iniciarMusica() {
+      if (mudo) return;
+      try {
+        if (MUSICA_MP3) {
+          if (!mus) { mus = { mp3: new Audio(MUSICA_MP3), ativo: false }; mus.mp3.loop = true; mus.mp3.volume = VOLUME_MUSICA * 0.5; }
+          mus.ativo = true;
+          mus.mp3.play().catch(function () {});
+          return;
+        }
+        var c = audioCtx();
+        if (!mus) mus = criarMusica(c);
+        if (mus.ativo) return;
+        mus.ativo = true;
+        mus.bus.gain.setTargetAtTime(VOLUME_MUSICA, c.currentTime, 1.5);   // entra devagar
+        proximoAcorde();
+        mus.timer = setInterval(proximoAcorde, 8000);
+      } catch (e) {}
+    }
+
+    function pararMusica() {
+      if (!mus || !mus.ativo) return;
+      mus.ativo = false;
+      if (mus.mp3) { mus.mp3.pause(); return; }
+      clearInterval(mus.timer);
+      mus.bus.gain.setTargetAtTime(0, ctx.currentTime, 0.4);              // some devagar
+    }
+
+    // Economiza bateria: pausa a trilha quando a aba fica escondida
+    document.addEventListener("visibilitychange", function () {
+      if (!ctx) return;
+      if (document.hidden) ctx.suspend(); else if (!mudo) ctx.resume();
+    });
+
+    window.SOM = {
+      iniciar: function () { iniciarMusica(); },
+      tocar: function (nome) { if (SONS[nome]) SONS[nome](); },
+      estaMudo: function () { return mudo; },
+      alternarMudo: function () {
+        mudo = !mudo;
+        try { localStorage.setItem(CHAVE, mudo ? "1" : "0"); } catch (e) {}
+        if (mudo) pararMusica(); else iniciarMusica();
+        return mudo;
+      }
+    };
+
+    // Botão ♪ / ✕ do topo
+    function atualizarBotao() {
+      var b = document.querySelector('[data-a="mute"]');
+      if (!b) return;
+      b.textContent = mudo ? "✕" : "♪";
+      b.setAttribute("aria-pressed", String(mudo));
+      b.setAttribute("aria-label", mudo ? "Ligar o som / Sound on" : "Desligar o som / Sound off");
+    }
+
+    // Escuta os cliques do jogo por fora (o main.js nem sabe que isso existe)
+    document.addEventListener("click", function (ev) {
+      var botao = ev.target.closest("[data-a]");
+      if (!botao || botao.disabled) return;
+      var acao = botao.dataset.a;
+
+      if (acao === "mute") { window.SOM.alternarMudo(); atualizarBotao(); return; }
+
+      window.SOM.iniciar();
+      if (acao === "adj") window.SOM.tocar(botao.dataset.d === "1" ? "mais" : "menos");
+      else if (acao === "choose" || acao === "pick") window.SOM.tocar("escolha");
+      else if (acao === "next") {
+        window.SOM.tocar("proximo");
+        // Alarme se o ar/água ficou abaixo de 30% (lê da barra que o jogo desenha)
+        setTimeout(function () {
+          var barra = document.querySelector(".barra--o2 [role=meter]");
+          if (barra && Number(barra.getAttribute("aria-valuenow")) < 30) window.SOM.tocar("alarme");
+        }, 300);
+      }
+    }, true);
+
+    document.addEventListener("DOMContentLoaded", atualizarBotao);
+  })();
+  </script>
+
 </body>
 </html>

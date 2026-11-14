@@ -1077,3 +1077,8 @@ html[lang="en"] .btn-idioma .idioma-en {
   .lancamento-texto .tripulacao { justify-content: flex-start; }
   .lancamento-texto .btn-principal { align-self: flex-start; }
 }
+
+
+/* Botões do topo (som + idioma) */
+.topo-botoes { display: flex; align-items: center; gap: 10px; }
+.btn-som { min-width: 48px; font-size: 18px; }
