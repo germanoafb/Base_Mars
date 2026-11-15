@@ -309,11 +309,30 @@
           <div class="evento-corpo">
             <h2 class="evento-titulo" id="ev-titulo">${t(`ev_${ev.tipo}_titulo`)}</h2>
             <p>${texto}</p>
-            <p class="evento-pergunta">${t("ev_pergunta")}</p>
+            <p class="evento-pergunta"><span class="evento-passo">${t("passo_1")}</span> ${t("ev_pergunta")}</p>
             <div class="escolhas">${opcoes}</div>
           </div>
         </div>
       </div>`;
+  }
+
+  // A carta de decisão é lida em voz alta (título, texto, pergunta e opções) com a voz do
+  // Orbi: quem ainda não lê bem consegue jogar. Como a tela redesenha a cada clique,
+  // guardamos qual carta já foi falada para não repetir a leitura.
+  let cartaFalada = "";
+  function narrarCarta(e) {
+    const A = window.ARES;
+    const ev = e && e.evento;
+    if (!A || !A.falar) return;
+    if (!ev || !ev.visivel || ev.escolha) { cartaFalada = ""; return; }
+    const marca = `${e.turno}|${e.fase}|${ev.tipo}`;
+    if (marca === cartaFalada) return;
+    cartaFalada = marca;
+    const texto = ev.tipo === "solar"
+      ? t("ev_solar_texto", { classe: ev.classe, data: dataCurta(ev.data) })
+      : t(`ev_${ev.tipo}_texto`);
+    const opcoes = (ev.opcoes || []).map((id) => t("op_" + id)).join(". ");
+    A.falar(`${t(`ev_${ev.tipo}_titulo`)}. ${texto} ${t("ev_pergunta")} ${opcoes}.`);
   }
 
   // Depois de escolher: um selo pequeno lembra a decisão do turno
@@ -386,6 +405,10 @@
     const chave = ultimoViagem ? "pousar" : ultimoSol ? "terminar" : naViagem ? "proximo_turno" : "proximo_sol";
     const esperando = J.precisaEscolher(e);
     const dormir = ui.estacao === "home";
+    const idOrientacao = esperando ? "dica-escolha" : dormir ? "dica-dormir" : "dica-turno";
+    const orientacao = esperando
+      ? `<p class="dica-escolha" id="dica-escolha" role="status">${ico("i-idea")}<span><b>${t("passo_1")}</b>${t("dica_escolha")}</span></p>`
+      : `<p class="dica-escolha dica-escolha--seguir" id="${idOrientacao}" role="note">${ico("i-idea")}<span><b>${t("passo_2")}</b>${t(dormir ? "dica_dormir" : "dica_distribuir")}</span></p>`;
 
     return `
     <section class="tela tela--jogo tela--${e.fase}${quieto ? " sem-animacao" : ""}" aria-labelledby="t-tela">
@@ -415,11 +438,11 @@
 
         <div class="jogo-direita">
           ${painel(e)}
+          ${orientacao}
           <div class="jogo-acoes">
             <button class="btn btn-secundario btn-diario" type="button" data-a="log">${ico("i-log")} <span>${t("diario_curto")}</span></button>
-            <button class="btn btn-principal${dormir ? " btn--destaque" : ""}" type="button" data-a="next"${esperando ? ' disabled aria-describedby="dica-escolha"' : ""}><span>${dormir ? t("dormir") : t(chave)}</span>${dormir ? "" : ico("i-seta", "ico ico--seta")}</button>
+            <button class="btn btn-principal${dormir ? " btn--destaque" : ""}" type="button" data-a="next"${esperando ? " disabled" : ""} aria-describedby="${idOrientacao}"><span>${dormir ? t("dormir") : t(chave)}</span>${dormir ? "" : ico("i-seta", "ico ico--seta")}</button>
           </div>
-          ${esperando ? `<p class="dica-escolha" id="dica-escolha">${t("dica_escolha")}</p>` : ""}
         </div>
       </div>
     </section>`;
@@ -559,6 +582,7 @@
     else if (ui.tela === "fim") html = telaFim(e);
     else html = telaJogo(e, quieto);
     app.innerHTML = html;
+    narrarCarta(e);
 
     const canvas = app.querySelector("#mapa");
     if (MAPA) MAPA.conectar(canvas, estadoDoMapa, chegouNaEstacao);

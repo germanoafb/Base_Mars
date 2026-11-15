@@ -48,8 +48,9 @@
     if (q(".tela--diario")) return ["diario"];
     if (q(".tela--fim")) return ["fim"];
     if (q(".tela--jogo")) {
+      // A carta já explica o que aconteceu; não abra outra caixa por cima das opções.
+      if (q(".carta-camada")) return [];
       const lista = [q(".tela--base") ? "base" : "viagem"];
-      if (q(".carta-camada")) lista.push("carta");        // carta de decisão na tela
       return lista;
     }
     return [];
@@ -93,6 +94,15 @@
     vistas.add(ctx);
     aberta = ctx;
     desenhar(ctx);
+    narrar(ctx);
+  }
+
+  // O Orbi lê o cartão em voz alta com a mesma voz do tutorial (quem não lê bem entende).
+  // Se tem carta de decisão na tela, quem fala é a própria carta (main.js): a dica fica só no visual.
+  function narrar(ctx) {
+    const A = window.ARES;
+    if (!A || !A.falar || q(".carta-camada")) return;
+    A.falar(`${t(`dica_${ctx}_titulo`, NUMEROS)}. ${t(`dica_${ctx}_texto`, NUMEROS)}`);
   }
 
   function fechar() {
@@ -135,6 +145,7 @@
       abrir(ctx);
     } else if (acao === "ok" || acao === "fechar") {
       if (acao === "ok" && window.SOM && window.SOM.tocar) window.SOM.tocar("escolha");
+      if (window.ARES && window.ARES.calar) window.ARES.calar();   // já foi lido: para a voz do Orbi
       fechar();
       const titulo = q("#app h1");                           // devolve o foco ao jogo (teclado)
       if (titulo) titulo.focus({ preventScroll: true });

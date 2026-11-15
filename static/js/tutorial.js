@@ -149,13 +149,29 @@
   };
 
   // ---------- A VOZ do Orbi ----------
-  // Ajustes: tom (pitch, 0 a 2) e velocidade (rate). Tom acima de 1.4 soa infantil.
+  // Ajustes: tom (pitch, 1 = normal) e velocidade (rate, 1 = normal).
+  // Um tom um pouco acima do normal deixa a voz mais alegre e "de robô simpático";
+  // exagerar (acima de ~1.3) vira voz de esquilo e soa estranho.
   // Obs.: algumas vozes (ex.: Google no Chrome) ignoram o tom; aí vale mais a escolha da voz.
   const VOZ = {
-    pt: { rate: 1.15, pitch: 1.5, volume: 1 },
-    en: { rate: 1.1, pitch: 1.45, volume: 1 },
+    pt: { rate: 1.15, pitch: 1.18, volume: 1 },
+    en: { rate: 1.15, pitch: 1.18, volume: 1 },
   };
   const CHAVE_VOZ = "ares_orbi_voz_";
+
+  // ---------- Voz natural via API (Edge TTS, grátis e sem chave) ----------
+  // O backend expõe POST /api/tts e devolve um MP3. Se a API falhar,
+  // o Orbi volta para as vozes do próprio navegador (Web Speech API).
+  const API_TTS = "/api/tts";
+  const VOZES_API = {
+    pt: ["pt-BR-AntonioNeural", "pt-BR-ThalitaMultilingualNeural", "pt-BR-FranciscaNeural"],
+    en: ["en-US-AvaNeural", "en-US-JennyNeural", "en-US-AriaNeural", "en-US-EmmaNeural"],
+  };
+  let apiFalhouEm = 0;                               // quando a API falhou (não trava para sempre)
+  const API_ESPERA = 8000;                           // ms de castigo antes de tentar a API de novo
+  const apiIndisponivel = () => Date.now() - apiFalhouEm < API_ESPERA;
+  let audioAtual = null;                             // <audio> da fala em andamento
+  const audiosNaMemoria = new Map();                 // "voz|texto" -> URL do MP3 (evita baixar de novo)
 
   const sintese = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window ? window.speechSynthesis : null;
   let vozLigada = true;
@@ -181,6 +197,8 @@
     if (/online/.test(n)) p += 30;
     if (/google/.test(n)) p += 50;
     if (/premium|enhanced|siri/.test(n)) p += 40;
+    if (/francisca|thalita/.test(n)) p += 30;      // Edge "Natural": as mais gostosas de ouvir
+    if (/luciana|fernanda/.test(n)) p += 15;       // Apple (iPhone/Mac)
     if ((en ? /^en[-_]us/i : /^pt[-_]br/i).test(v.lang)) p += 25;
     if (/francisca|thalita|luciana|fernanda|vit[oó]ria|camila|joana|maria|helena|giovanna|leila|raquel|samantha|aria|jenny|ava|zira|susan|emma|olivia|nora|zoe|allison|karen|moira|female/.test(n)) p += 25;
     if (/antonio|daniel|felipe|ricardo|jorge|david|mark|guy|ryan|male/.test(n) && !/female/.test(n)) p -= 15;
@@ -202,8 +220,22 @@
     return lista.find((v) => v.voiceURI === salva) || lista[0];
   }
 
-  // Botão "VOZ": passa para a próxima melhor voz do aparelho e fala uma amostra
+  // Botão "VOZ": passa para a próxima voz disponível e fala uma amostra.
+  // Com a API ligada, alterna entre as vozes neurais do Edge (mais bonitas).
+  function escolherVozApi() {
+    const lista = VOZES_API[idiomaAtual()] || VOZES_API.pt;
+    const salva = lerVoz(CHAVE_VOZ + idiomaAtual() + "_api");
+    return lista.includes(salva) ? salva : lista[0];
+  }
+
+  function trocarVozApi() {
+    const lista = VOZES_API[idiomaAtual()] || VOZES_API.pt;
+    const i = lista.indexOf(escolherVozApi());
+    guardarVoz(CHAVE_VOZ + idiomaAtual() + "_api", lista[(i + 1) % lista.length]);
+  }
+
   function trocarVoz() {
+    if (!apiIndisponivel()) { trocarVozApi(); falar(t("tut_voz_amostra")); return; }
     const lista = listaDeVozes().slice(0, 6);
     if (lista.length < 2) return;
     const atual = escolherVoz();
@@ -212,25 +244,46 @@
     falar(t("tut_voz_amostra"));
   }
 
+  // Só mostra o botão de trocar voz se houver mais de uma opção disponível.
+  function temComoTrocarVoz() {
+    if (!apiIndisponivel()) return (VOZES_API[idiomaAtual()] || []).length > 1;
+    return listaDeVozes().length > 1;
+  }
+
   function pararFala() {
     falaId++;
     timersBipe.forEach(clearTimeout);
     timersBipe = [];
     falasAtivas = [];
+    if (audioAtual) { try { audioAtual.pause(); } catch (e) { /* ok */ } audioAtual = null; }
     try { if (sintese) sintese.cancel(); } catch (e) { /* ok */ }
     aoFalar(false);
   }
 
-  // Sem voz no aparelho: o Orbi "fala" em bipes de robô (uma notinha a cada sílaba)
+  // Sem voz no aparelho: o Orbi "fala" com piupius fofos (uma notinha a cada sílaba)
   function balbuciar(texto, id) {
     const c = audio();
     const silabas = Math.max(4, Math.round(texto.length / 3));
     if (c) {
-      const NOTAS = [392, 440, 523, 587, 659, 784];
+      const NOTAS = [523, 587, 659, 784, 880];                              // escala alegre (pentatônica)
       const n = c.currentTime + 0.05;
-      for (let i = 0; i < silabas; i++) tom(NOTAS[(i * 5 + (i % 3)) % NOTAS.length] * (i % 7 === 0 ? 1.5 : 1), n + i * 0.085, 0.07, "square", 0.035);
+      for (let i = 0; i < silabas; i++) {
+        const f = NOTAS[(i * 3 + (i % 4)) % NOTAS.length] * (i % 9 === 0 ? 1.5 : 1);
+        const t0 = n + i * 0.11;
+        const osc = c.createOscillator();
+        const g = c.createGain();
+        osc.type = i % 2 ? "sine" : "triangle";
+        osc.frequency.setValueAtTime(f * 0.9, t0);
+        osc.frequency.exponentialRampToValueAtTime(f * 1.12, t0 + 0.08);     // "piu" subindo
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.linearRampToValueAtTime(0.045, t0 + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.1);
+        osc.connect(g); g.connect(c.destination);
+        osc.start(t0);
+        osc.stop(t0 + 0.12);
+      }
     }
-    timersBipe.push(setTimeout(() => { if (id === falaId) aoFalar(false); }, silabas * 85 + 200));
+    timersBipe.push(setTimeout(() => { if (id === falaId) aoFalar(false); }, silabas * 110 + 200));
   }
 
   function inicializarVoz() {
@@ -243,18 +296,86 @@
     }
   }
 
-  function falar(texto) {
-    pararFala();
-    if (!vozLigada) return;                          // o botão de voz do tutorial manda (o ♪ do jogo só define o começo)
-    const id = falaId;
-    aoFalar(true);
-    if (!sintese || !inicializarVoz()) { balbuciar(texto, id); return; }
+  function prepararTexto(texto, emPt) {
+    let s = String(texto || "");
+    s = s.replace(/<[^>]*>/g, " ");                                         // etiquetas HTML (<b>, </b>...)
+    s = s.replace(/&nbsp;/g, " ").replace(/&amp;/g, " e ");                 // entidades soltas
+    s = s.replace(/[\p{Extended_Pictographic}\u200d\ufe0f]/gu, " ");        // emojis
+    s = s.replace(/[✦★☆•·»«→←↑↓♪✕✓]/g, " ");                                // símbolos soltos
+    if (emPt) {
+      s = s.replace(/O₂|O2/g, "oxigênio").replace(/mSv/g, "milisieverts")
+           .replace(/(\d+)\s?%/g, "$1 por cento").replace(/(\d+)h(\d+)min/g, "$1 horas e $2 minutos");
+    } else {
+      s = s.replace(/O₂|O2/g, "oxygen").replace(/mSv/g, "millisieverts")
+           .replace(/(\d+)\s?%/g, "$1 percent").replace(/(\d+)h(\d+)min/g, "$1 hours and $2 minutes");
+    }
+    s = s.replace(/\s+([.,;:!?…])/g, "$1").replace(/([!?.])\1+/g, "$1").replace(/\s+/g, " ").trim();
+    return s;
+  }
 
-    // Frases curtas (evita o corte de falas longas), todas na fila de uma vez:
-    // assim o navegador já prepara a próxima e não há pausa entre as frases.
-    const frases = (texto.replace(/\s+/g, " ").match(/[^.!?…]+[.!?…]*/g) || [texto]).map((s) => s.trim()).filter(Boolean);
+  // Fala pela API: baixa o MP3 de cada frase (com cache) e toca em sequência.
+  function buscarAudio(texto, voz, cfg) {
+    const chave = voz + "|" + texto;
+    if (audiosNaMemoria.has(chave)) return Promise.resolve(audiosNaMemoria.get(chave));
+    return fetch(API_TTS, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: texto,
+        voice: voz,
+        rate: cfg.rate,
+        pitch: "+" + Math.round((cfg.pitch - 1) * 100) + "%",
+      }),
+    }).then((r) => {
+      if (!r.ok) throw new Error("tts " + r.status);
+      return r.blob();
+    }).then((b) => {
+      const url = URL.createObjectURL(b);
+      audiosNaMemoria.set(chave, url);
+      return url;
+    });
+  }
+
+  function tocarMp3(url) {
+    return new Promise((resolve, reject) => {
+      const a = new Audio(url);
+      audioAtual = a;
+      a.onended = () => resolve();
+      a.onpause = () => resolve();                   // pararFala() pausa o áudio: encerra a espera
+      a.onerror = () => reject(new Error("audio"));
+      a.play().catch(reject);
+    });
+  }
+
+  async function falarComApi(blocos, id, cfg) {
+    const voz = escolherVozApi();
+    let tocou = false;
+    try {
+      for (const f of blocos) {
+        if (id !== falaId) return;
+        // Entonação: frases com "!" e "?" ganham um tom um pouquinho mais animado.
+        const fim = f.slice(-1);
+        const prosa = {
+          rate: cfg.rate + (fim === "!" ? 0.03 : 0),
+          pitch: cfg.pitch + (fim === "!" ? 0.04 : fim === "?" ? 0.06 : 0),
+        };
+        const url = await buscarAudio(f, voz, prosa);
+        if (id !== falaId) return;
+        await tocarMp3(url);
+        if (!tocou) console.info("[Orbi] voz natural da API:", voz);
+        tocou = true;
+      }
+      if (id === falaId) aoFalar(false);
+    } catch (e) {
+      if (tocou) { if (id === falaId) aoFalar(false); return; }   // já falou algo: não repete
+      throw e;                                                     // nada tocou: deixa o navegador tentar
+    }
+  }
+
+  // Fala pelas vozes do navegador (Web Speech API) — plano B.
+  function falarComSintese(limpo, frases, id, cfg) {
+    if (!sintese || !inicializarVoz()) { balbuciar(limpo, id); return; }
     const emPt = idiomaAtual() !== "en";
-    const cfg = emPt ? VOZ.pt : VOZ.en;
     const v = escolherVoz();
     let comecou = false;
     let restantes = frases.length;
@@ -264,8 +385,12 @@
       const u = new SpeechSynthesisUtterance(f);
       u.lang = emPt ? "pt-BR" : "en-US";
       if (v) { try { u.voice = v; u.lang = v.lang; } catch (e) { /* voz estranha: usa a padrão do idioma */ } }
-      u.pitch = cfg.pitch;
-      u.rate = cfg.rate;
+      const fim = f.slice(-1);
+      const animado = fim === "!" ? 1 : 0;
+      const pergunta = fim === "?" ? 1 : 0;
+      // Entonação: variação bem discreta. Exagero no tom é o que mais deixa a voz "estranha".
+      u.pitch = Math.max(0.5, Math.min(2, cfg.pitch + animado * 0.04 + pergunta * 0.07 + (Math.random() - 0.5) * 0.04));
+      u.rate = cfg.rate + animado * 0.03;
       u.volume = cfg.volume;
       u.onstart = () => { comecou = true; };
       u.onend = terminou;
@@ -274,15 +399,80 @@
     });
     timersBipe.push(setTimeout(() => { if (id === falaId) falasAtivas.forEach((u) => sintese.speak(u)); }, 80));
 
-    // Se o aparelho não começou a falar em 5 segundos, usa os bipes do Orbi
+    // Se o aparelho não começou a falar em 5 segundos, usa os piupius do Orbi
     // (vozes online podem demorar um pouco para a primeira frase)
     timersBipe.push(setTimeout(() => {
       if (id !== falaId || comecou) return;
       try { sintese.cancel(); } catch (e) { /* ok */ }
       const novo = ++falaId;
       aoFalar(true);
-      balbuciar(texto, novo);
+      balbuciar(limpo, novo);
     }, 5000));
+  }
+
+  // A API sintetiza o texto inteiro de uma vez. Mandar uma frase por arquivo
+  // deixava uma pausa audível (e um novo download) a cada ponto final.
+  const LIMITE_API = 450;                            // o backend corta em 500 caracteres
+  function blocosDaApi(texto, frases) {
+    if (texto.length <= LIMITE_API) return [texto];
+    const blocos = [];
+    let atual = "";
+    for (const f of frases) {
+      if (atual && (atual + " " + f).length > LIMITE_API) { blocos.push(atual); atual = f; }
+      else atual = atual ? atual + " " + f : f;
+    }
+    if (atual) blocos.push(atual);
+    return blocos;
+  }
+
+  // Vai gerando o MP3 antes da hora: a síntese demora 1-2s, então o áudio do
+  // passo seguinte (e o de boas-vindas) já fica pronto e a voz começa na hora.
+  function preaquecer(texto) {
+    if (!texto || !vozLigada || apiIndisponivel()) return;
+    const emPt = idiomaAtual() !== "en";
+    const limpo = prepararTexto(texto, emPt) || String(texto || "");
+    if (!limpo) return;
+    const cfg = emPt ? VOZ.pt : VOZ.en;
+    const frases = (limpo.match(/[^.!?…]+[.!?…]*/g) || [limpo]).map((s) => s.trim()).filter(Boolean);
+    const voz = escolherVozApi();
+    blocosDaApi(limpo, frases).forEach((f) => {
+      const fim = f.slice(-1);
+      // Mesmos ajustes usados na fala — assim o áudio é reaproveitado do cache.
+      buscarAudio(f, voz, {
+        rate: cfg.rate + (fim === "!" ? 0.03 : 0),
+        pitch: cfg.pitch + (fim === "!" ? 0.04 : fim === "?" ? 0.06 : 0),
+      }).catch(() => { /* sem problema: a fala normal tenta de novo */ });
+    });
+  }
+
+  function falar(texto) {
+    pararFala();
+    if (!vozLigada) return;                          // o botão de voz do tutorial manda (o ♪ do jogo só define o começo)
+    const id = falaId;
+    aoFalar(true);
+    const emPt = idiomaAtual() !== "en";
+    const limpo = prepararTexto(texto, emPt) || String(texto || "");
+    const cfg = emPt ? VOZ.pt : VOZ.en;
+    // Frases curtas: o navegador corta falas longas (vale só para as vozes do navegador).
+    const frases = (limpo.match(/[^.!?…]+[.!?…]*/g) || [limpo]).map((s) => s.trim()).filter(Boolean);
+    const blocos = blocosDaApi(limpo, frases);
+
+    if (!apiIndisponivel()) {
+      falarComApi(blocos, id, cfg).catch((e) => {
+        if (id !== falaId) return;
+        if (e && e.name === "NotAllowedError") {
+          // O Chrome só libera áudio depois de um clique na página. Isso NÃO é culpa
+          // da API: na próxima fala ela é tentada de novo.
+          console.warn("[Orbi] o navegador bloqueou o áudio (autoplay). Clique na página e fale de novo.");
+        } else {
+          apiFalhouEm = Date.now();                  // backend fora do ar: tenta de novo mais tarde
+          console.warn("[Orbi] API de voz falhou, usando a voz do navegador:", e && e.message);
+        }
+        falarComSintese(limpo, frases, id, cfg);
+      });
+      return;
+    }
+    falarComSintese(limpo, frases, id, cfg);
   }
 
   // ---------- Estado do tutorial ----------
@@ -648,7 +838,7 @@
       </div>`;
   }
 
-  function orbi() { return raiz.querySelector(".orbi"); }
+  function orbi() { return raiz ? raiz.querySelector(".orbi") : null; }
 
   function humor(h) {
     const o = orbi();
@@ -716,7 +906,7 @@
     const trocar = P('[data-tut="trocarvoz"]');
     trocar.textContent = t("tut_voz_trocar_curto");
     trocar.setAttribute("aria-label", t("tut_voz_trocar"));
-    trocar.style.display = vozLigada && listaDeVozes().length > 1 ? "" : "none";   // só aparece se o aparelho tem mais de uma voz
+    trocar.style.display = vozLigada && temComoTrocarVoz() ? "" : "none";   // só aparece se há mais de uma voz
   }
 
   function mostrarPasso(n, { falarAgora = true } = {}) {
@@ -735,8 +925,11 @@
 
     if (falarAgora) {
       SFX.chamar();
+      preaquecer(def.texto());                       // já gera o MP3 enquanto a criança lê
       escreverNoBalao(def.texto());
       setTimeout(() => { if (raiz && passo === n) falar(def.texto()); }, 280);
+      const seguinte = PASSOS[n + 1];
+      if (seguinte) setTimeout(() => { if (raiz && passo === n) preaquecer(seguinte.texto()); }, 2000);
     } else {
       escreverNoBalao(def.texto());
       clearInterval(digitando);
@@ -766,8 +959,8 @@
     vozLigada = efeitosLigados();
     mostrarBoasVindas();
     const jaTocou = !navigator.userActivation || navigator.userActivation.hasBeenActive;   // sem toque, o navegador não deixa falar
-    if (vozLigada && sintese && jaTocou) {
-      try { window.speechSynthesis.resume && window.speechSynthesis.resume(); } catch (e) {}
+    if (vozLigada && jaTocou && (!apiIndisponivel() || sintese)) {
+      try { window.speechSynthesis && window.speechSynthesis.resume && window.speechSynthesis.resume(); } catch (e) {}
       if (window.I18N && window.I18N.t) {
         const textoBoasVindas = window.I18N.t("tut_boasvindas_texto");
         setTimeout(() => falar(textoBoasVindas), 80);
@@ -834,9 +1027,10 @@
   // Botão "?" do topo e primeira visita
   document.addEventListener("click", (ev) => {
     if (ev.target.closest('[data-tut="abrir"]')) {
-      abrir();
       const textoBoasVindas = (window.I18N && window.I18N.t) ? window.I18N.t("tut_boasvindas_texto") : "Bem-vindo ao tutorial de missão.";
-      if (window.speechSynthesis && window.speechSynthesis.speaking === false) {
+      preaquecer(textoBoasVindas);                   // clicou no "?": já vai gerando a primeira fala
+      abrir();
+      if (!apiIndisponivel() || (window.speechSynthesis && window.speechSynthesis.speaking === false)) {
         setTimeout(() => falar(textoBoasVindas), 100);
       }
     }
@@ -846,6 +1040,20 @@
   window.ARES.orbiSvg = orbiSvg;                     // as dicas (dicas.js) reaproveitam o desenho do Orbi
   window.TUTORIAL = { abrir, fechar, jaViu: visto };
 
-  function iniciar() { if (SEMPRE_ABRIR || !visto()) abrir(); }
+  // O resto do jogo usa a MESMA voz do Orbi (minigames, cartas de decisão e cartões de dica).
+  // Quem fala por último manda: falar() já interrompe a fala anterior, então não há duas vozes juntas.
+  window.ARES.falar = (texto) => { if (vozLigada) falar(texto); };
+  window.ARES.preaquecer = (texto) => preaquecer(texto);
+  window.ARES.calar = pararFala;
+
+  // O tutorial só abre depois da abertura narrativa (intro.js) terminar
+  function iniciar() {
+    if (!(SEMPRE_ABRIR || !visto())) return;
+    // A intro demora alguns segundos: aproveita para já gerar a voz.
+    preaquecer((window.I18N && window.I18N.t) ? window.I18N.t("tut_boasvindas_texto") : "");
+    if (PASSOS[0]) preaquecer(PASSOS[0].texto());
+    if (window.ARES_INTRO_ATIVA) { window.addEventListener("ares:intro:fechada", () => abrir(), { once: true }); return; }
+    abrir();
+  }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar); else iniciar();
 })();

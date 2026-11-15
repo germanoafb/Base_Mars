@@ -232,8 +232,8 @@ html[lang="en"] .btn-idioma .idioma-en {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font: .8rem/1.4 var(--fonte-titulo);
-  text-transform: uppercase;
+  /* 15px: mais fácil de ler para quem está aprendendo a ler (antes: 12,8px) */
+  font: .95rem/1.4 var(--fonte-titulo);
   border: var(--borda) solid var(--sombra);
   cursor: pointer;
 }
@@ -718,7 +718,14 @@ html[lang="en"] .btn-idioma .idioma-en {
 
 .evento-corpo { flex: 1; min-width: 0; }
 .evento-titulo { margin-bottom: 6px; color: var(--cor); }
-.evento-pergunta { margin-top: 8px; font-weight: 700; }
+.evento-pergunta { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-weight: 700; }
+.evento-passo {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  color: var(--fundo);
+  background: var(--cor);
+  font: 700 .65rem/1.4 var(--fonte-titulo);
+}
 
 .escolhas { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
 
@@ -777,7 +784,28 @@ html[lang="en"] .btn-idioma .idioma-en {
 .efeito--ruim   { color: var(--ruim); }
 .efeito--neutro { color: var(--texto-suave); }
 
-.dica-escolha { text-align: center; font-weight: 700; color: var(--energia); }
+.dica-escolha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 1rem;
+  line-height: 1.35;
+  font-weight: 700;
+  color: var(--texto);
+  background: var(--cartao);
+  border: 3px solid var(--energia);
+  box-shadow: 3px 3px 0 var(--sombra);
+}
+.dica-escolha > .ico { width: 1.6em; height: 1.6em; flex: 0 0 auto; color: var(--energia); }
+.dica-escolha b {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--energia);
+  font: 700 .65rem/1.4 var(--fonte-titulo);
+}
 
 
 /* ---------- 11b. MINIGAMES DE 15 SEGUNDOS ---------- */

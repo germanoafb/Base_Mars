@@ -276,6 +276,10 @@
 
     const som = (nome) => { try { if (window.SOM) window.SOM.tocar(nome); } catch (e) { /* sem som: tudo bem */ } };
 
+    // A mesma voz do Orbi do tutorial (quem não lê bem ainda entende a instrução).
+    const narra = (texto) => { const A = window.ARES; if (A && A.falar) A.falar(texto); };
+    const cala = () => { const A = window.ARES; if (A && A.calar) A.calar(); };
+
     const ctrl = {
       agora,
       som,
@@ -305,11 +309,13 @@
         `<div class="mini-arena mini-arena--previa" aria-hidden="true">${ico(def.icone, "ico ico--gigante")}</div>`,
         botao("comecar", t("mini_comecar"), "btn-principal") + botao("pular", t("mini_pular"), "btn-secundario"));
       camada.querySelector('[data-m="comecar"]').focus();
+      narra(`${titulo}. ${t(`mini_${jogo}_instrucao`)}`);
     }
 
     function comecar() {
       if (fase !== "intro") return;
       fase = "jogando";
+      cala();                                       // a instrução já foi ouvida: não fala por cima do jogo
       camada.innerHTML = moldura(`
         <div class="mini-status">
           <div class="mini-tempo" aria-hidden="true"><div class="mini-tempo-fill"></div></div>
@@ -354,10 +360,12 @@
         </div>`,
         botao("continuar", t("mini_continuar"), "btn-principal"));
       camada.querySelector('[data-m="continuar"]').focus();
+      narra(`${t(veredito)} ${t("mini_sabia")} ${t(`mini_${jogo}_fato`)}`);
     }
 
     function sair(valor) {
       desligar();
+      cala();
       document.removeEventListener("keydown", teclas, true);
       camada.remove();
       document.body.classList.remove("mini-aberto");
