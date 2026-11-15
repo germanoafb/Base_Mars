@@ -1333,3 +1333,51 @@ body.mini-aberto { overflow: hidden; }
   box-shadow: var(--bloco);
 }
 .cert-sem { max-width: 32rem; }
+
+/* ===================== DICAS DO ORBI (cartão de orientação nas telas de missão) ===================== */
+.btn-dica { color: var(--energia); }
+.btn-dica .ico { width: 22px; height: 22px; }
+
+.dica {
+  position: fixed; z-index: 50;
+  left: 12px; bottom: 12px;
+  width: min(420px, calc(100% - 24px));
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 14px 12px 10px;
+  background: var(--cartao); color: var(--texto);
+  border: var(--borda) solid var(--energia);
+  border-radius: 14px;
+  box-shadow: var(--bloco);
+  font-family: var(--fonte-texto);
+  animation: dica-entra .25s ease-out;
+}
+.dica[hidden] { display: none; }
+
+.dica-orbi.orbi { width: 52px; flex: 0 0 auto; }
+.dica-corpo { flex: 1; min-width: 0; padding-right: 22px; }
+.dica-selo { margin: 0; font-family: var(--fonte-titulo); font-size: 9px; letter-spacing: .08em; color: #2ee6c8; }
+.dica-titulo { margin: 4px 0 6px; font-family: var(--fonte-titulo); font-size: 13px; line-height: 1.4; color: var(--acento); }
+.dica-texto { margin: 0 0 10px; font-size: 18px; line-height: 1.35; }
+.dica-texto b { color: var(--energia); }
+.dica-ok { width: 100%; }
+
+.dica-x {
+  position: absolute; top: 4px; right: 6px;
+  width: 36px; height: 36px;
+  font-size: 24px; line-height: 1; color: var(--texto-suave);
+  background: transparent; border: 0; border-radius: 8px; cursor: pointer;
+}
+.dica-x:hover { color: var(--texto); background: rgba(255, 233, 214, .1); }
+.dica-x:focus-visible { outline: 3px solid var(--energia); outline-offset: 2px; }
+
+@keyframes dica-entra { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 700px) {
+  .dica { left: 8px; right: 8px; bottom: 8px; width: auto; padding: 10px 12px 10px 8px; }
+  .dica-orbi.orbi { width: 40px; }
+  .dica-texto { font-size: 16px; margin-bottom: 8px; }
+  .dica-titulo { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dica { animation: none; }
+}

@@ -842,6 +842,8 @@
     }
   });
 
+  window.ARES = window.ARES || {};
+  window.ARES.orbiSvg = orbiSvg;                     // as dicas (dicas.js) reaproveitam o desenho do Orbi
   window.TUTORIAL = { abrir, fechar, jaViu: visto };
 
   function iniciar() { if (SEMPRE_ABRIR || !visto()) abrir(); }
