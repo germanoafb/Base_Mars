@@ -34,12 +34,13 @@
 
   const FONTE = {
     titulo: '"Press Start 2P", "Courier New", monospace',
-    texto: '"Pixelify Sans", "Courier New", monospace',
+    texto: '"Ares Digitos", "Pixelify Sans", "Courier New", monospace',
     logo: '"Tiny5 Duo", "Press Start 2P", monospace',
   };
 
-  // Onde procurar o logo da NASA (o primeiro que existir é usado)
-  const LOGOS_NASA = ["static/assets/nasa-logo.png", "static/assets/nasa-logo.svg"];
+  // Logo da NASA: desligado. As regras do Space Apps não deixam as equipes usarem
+  // o logo/insígnia da NASA, então o certificado mostra só o texto.
+  const LOGOS_NASA = [];
 
   // Pixel art: cada item é [x, y, largura, altura] em "quadradinhos"
   const MARTE = [[2, 0, 4, 1], [1, 1, 6, 1], [0, 2, 8, 4], [1, 6, 6, 1], [2, 7, 4, 1]];
@@ -53,8 +54,8 @@
   // ---------- Carregar fontes e logo ----------
   function carregarFontes() {
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
-    const pedidos = ['64px "Tiny5 Duo"', '40px "Press Start 2P"', '40px "Pixelify Sans"', '700 40px "Pixelify Sans"'];
-    const carregando = Promise.all(pedidos.map((f) => document.fonts.load(f, "AÁãçõ").catch(() => null)));
+    const pedidos = ['40px "Ares Digitos"', '64px "Tiny5 Duo"', '40px "Press Start 2P"', '40px "Pixelify Sans"', '700 40px "Pixelify Sans"'];
+    const carregando = Promise.all(pedidos.map((f) => document.fonts.load(f, "AÁãçõ0123456789").catch(() => null)));
     const limite = new Promise((ok) => setTimeout(ok, 2500));   // sem internet: usa as fontes de reserva
     return Promise.race([carregando, limite]).then(() => null, () => null);
   }

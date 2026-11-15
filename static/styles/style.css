@@ -7,6 +7,18 @@
    ========================================================= */
 
 
+/* Números legíveis: na Pixelify Sans o "5" parece um "S" e o "3" parece um "9".
+   Esta fonte só tem os dígitos 0–9 (da VT323, licença OFL), então o resto do
+   texto continua na Pixelify. size-adjust deixa os números da altura das letras. */
+@font-face {
+  font-family: "Ares Digitos";
+  src: url("../fonts/vt323-digitos.woff2") format("woff2");
+  font-weight: 100 900;
+  size-adjust: 125%;
+  font-display: swap;
+  unicode-range: U+30-39;
+}
+
 /* ---------- 1. CORES E MEDIDAS (mude aqui para mudar o jogo todo) ---------- */
 :root {
   /* Fundo e textos */
@@ -43,7 +55,7 @@
 
   /* Fontes */
   --fonte-titulo: "Press Start 2P", "Courier New", monospace;   /* textos curtos */
-  --fonte-texto: "Pixelify Sans", "Courier New", monospace;     /* textos longos */
+  --fonte-texto: "Ares Digitos", "Pixelify Sans", "Courier New", monospace;     /* textos longos (números na VT323) */
   --fonte-logo: "Tiny5 Duo", var(--fonte-titulo);
 
   color-scheme: dark;
@@ -1410,7 +1422,6 @@ body.mini-aberto { overflow: hidden; }
   border: var(--borda) solid var(--linha);
   box-shadow: var(--bloco);
 }
-.cert-sem { max-width: 32rem; }
 .cert-baixar--ok:disabled { opacity: 1; cursor: default; color: #0f2a14; background: var(--bom); box-shadow: inset -4px -4px 0 #2f9a4c, var(--bloco); }
 .cert-aviso { margin: 0; max-width: 32rem; font-weight: 700; color: var(--ruim); text-align: center; }
 .cert-aviso:empty { display: none; }

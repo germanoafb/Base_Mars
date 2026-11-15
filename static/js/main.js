@@ -461,12 +461,9 @@
   }
 
   // ---------- Certificado do fim da missão ----------
-  // Quem cumpriu a missão (2 ou 3 estrelas) ganha o certificado; o desenho fica em certificado.js.
+  // Toda criança ganha o certificado (até quem voltou mais cedo: "ninguém perde").
+  // O desenho fica em certificado.js.
   function certificadoHtml(r, estrelas) {
-    if (r.resultado === "cedo") {
-      ui.certificado = null;
-      return `<p class="explica cert-sem">${t("cert_sem")}</p>`;
-    }
     const nome = limparNome(ui.nome) || jogador().nome;
     const slug = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "comandante";
     const data = new Intl.DateTimeFormat(local(), { day: "numeric", month: "long", year: "numeric" }).format(new Date());
