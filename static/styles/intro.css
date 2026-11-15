@@ -1,0 +1,410 @@
+/* =========================================================
+   ABERTURA NARRATIVA — PROJETO ARES
+   Visual pixel art alinhado ao style.css do jogo.
+   Animações curtas e em "passos" (steps), como no resto do jogo.
+   ========================================================= */
+
+#ares-intro {
+  --intro-bg: #100a10;
+  --intro-panel: #1a0f14;
+  --intro-panel-light: #2b1820;
+  --intro-border: #5a3040;
+  --intro-text: #ffe9d6;
+  --intro-muted: #d9b8a4;
+  --intro-orange: #ff8a4c;
+  --intro-yellow: #ffd24a;
+
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 18px;
+  color: var(--intro-text);
+  font-family: var(--fonte-texto, "Pixelify Sans", monospace);
+  background-color: var(--intro-bg);
+  background-image:
+    radial-gradient(ellipse at 50% 120%, rgba(232, 103, 60, .18), transparent 58%),
+    linear-gradient(rgba(255, 233, 214, .8), rgba(255, 233, 214, .8)),
+    linear-gradient(rgba(255, 233, 214, .7), rgba(255, 233, 214, .7)),
+    linear-gradient(rgba(201, 160, 140, .8), rgba(201, 160, 140, .8));
+  background-size: auto, 3px 3px, 2px 2px, 2px 2px;
+  background-repeat: no-repeat;
+  background-position: center, 10% 12%, 82% 24%, 65% 82%;
+}
+
+#ares-intro[hidden] {
+  display: none;
+}
+
+#ares-intro .intro-shell {
+  position: relative;
+  width: min(100%, 900px);
+  overflow: hidden;
+  border: 4px solid var(--intro-border);
+  background: var(--intro-panel);
+  box-shadow: 8px 8px 0 #080407, 0 0 0 4px rgba(255, 138, 76, .08);
+  animation: ares-cena .25s steps(4) both;
+}
+
+#ares-intro .intro-top {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 3px solid var(--intro-border);
+  color: var(--intro-muted);
+  background: #24131b;
+  font: 10px/1.5 var(--fonte-titulo, monospace);
+  letter-spacing: .04em;
+}
+
+#ares-intro .intro-top-dir {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#ares-intro .intro-progress {
+  display: flex;
+  gap: 7px;
+}
+
+#ares-intro .intro-progress i {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #80505a;
+  background: #50303a;
+}
+
+#ares-intro .intro-progress i.active {
+  border-color: #ffe0ad;
+  background: var(--intro-orange);
+  box-shadow: 0 0 8px rgba(255, 138, 76, .5);
+}
+
+#ares-intro .intro-art {
+  position: relative;
+  height: clamp(210px, 40vh, 350px);
+  overflow: hidden;
+  background: #101329;
+  border-bottom: 4px solid var(--intro-border);
+  image-rendering: pixelated;
+}
+
+#ares-intro .intro-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .12;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 3px,
+    rgba(0, 0, 0, .55) 4px
+  );
+}
+
+#ares-intro .intro-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  shape-rendering: crispEdges;
+  animation: ares-cena .25s steps(4) both;   /* cada cena entra como as telas do jogo */
+}
+
+#ares-intro .intro-copy {
+  min-height: 150px;
+  padding: clamp(18px, 3vw, 30px) clamp(16px, 5vw, 48px) 22px;
+  text-align: center;
+  background-image: linear-gradient(90deg, transparent, rgba(255, 138, 76, .035), transparent);
+}
+
+#ares-intro .intro-kicker {
+  margin-bottom: 12px;
+  color: #ffb36b;
+  font: 9px/1.8 var(--fonte-titulo, monospace);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+#ares-intro h1 {
+  margin: 0 0 14px;
+  color: #ffd18c;
+  font: clamp(12px, 2vw, 19px)/1.8 var(--fonte-titulo, monospace);
+  text-shadow: 3px 3px 0 #5a3040;
+}
+
+#ares-intro .intro-description {
+  max-width: 680px;
+  margin: 0 auto;
+  color: var(--intro-text);
+  font: clamp(17px, 2.2vw, 23px)/1.4 var(--fonte-texto, monospace);
+}
+
+#ares-intro .intro-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 4px 18px 22px;
+}
+
+#ares-intro button {
+  min-width: 150px;
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 3px solid #ffd0a8;
+  border-radius: 0;
+  color: #1a0f14;
+  background: var(--intro-orange);
+  box-shadow: 4px 4px 0 #080407;
+  font: 9px/1.6 var(--fonte-titulo, monospace);
+  cursor: pointer;
+  transition: transform .12s steps(2), box-shadow .12s steps(2), filter .12s;
+}
+
+#ares-intro button:hover:not(:disabled) {
+  filter: brightness(1.12);
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 #080407;
+}
+
+#ares-intro button:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #080407;
+}
+
+#ares-intro button.secondary {
+  color: var(--intro-text);
+  background: var(--intro-panel-light);
+  border-color: #80505a;
+}
+
+#ares-intro button:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+#ares-intro button:focus-visible {
+  outline: 3px solid #6fd3ff;
+  outline-offset: 4px;
+}
+
+#ares-intro .intro-skip {
+  position: absolute;
+  z-index: 2;
+  top: 57px;
+  right: 12px;
+  min-width: 0;
+  min-height: 0;
+  padding: 7px 10px;
+  font: 12px/1.4 var(--fonte-texto, monospace);
+  box-shadow: 3px 3px 0 #080407;
+}
+
+#ares-intro .intro-skip[hidden] {
+  display: none;
+}
+
+/* Botão de som da abertura (♪ SOM / ✕ SOM) */
+#ares-intro .intro-som {
+  min-width: 0;
+  min-height: 0;
+  padding: 6px 9px;
+  border-width: 2px;
+  font: 9px/1.4 var(--fonte-titulo, monospace);
+  box-shadow: 3px 3px 0 #080407;
+}
+
+#ares-intro .intro-som[aria-pressed="false"] {
+  color: #1a0f14;
+  background: var(--intro-yellow);
+  border-color: #ffe9a8;
+}
+
+#ares-intro .intro-som.chamar {
+  animation: ares-chamar 1s steps(2) infinite;
+}
+
+/* =========================================================
+   ANIMAÇÕES DAS CENAS
+   Curtas e em passos, no mesmo ritmo do style.css do jogo
+   (.25s a .4s). Quem manda no tempo é o número antes de "s".
+   ========================================================= */
+
+/* Todo elemento animado do SVG gira/escala em volta do próprio centro */
+#ares-intro .anim {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+
+#ares-intro .pisca     { animation: ares-piscar 1.2s steps(2) var(--d, 0s) infinite; }
+#ares-intro .respira   { animation: ares-respirar .8s steps(2) var(--d, 0s) infinite; }
+#ares-intro .flutua    { animation: ares-flutuar 1.6s steps(2) var(--d, 0s) infinite; }
+#ares-intro .pula      { animation: ares-pulo .7s steps(2) var(--d, 0s) infinite; }
+#ares-intro .passo     { animation: ares-passo .3s steps(2) var(--d, 0s) 8; }
+#ares-intro .caminha   { animation: ares-caminhar 2.4s steps(12) var(--d, 0s) both; }
+
+#ares-intro .voa       { animation: ares-voar .6s steps(2) infinite alternate; }
+#ares-intro .earth     { animation: ares-earth 3s steps(6) infinite alternate; }
+#ares-intro .mars      { animation: ares-mars 1.4s steps(3) infinite alternate; }
+#ares-intro .marte-longe { animation: ares-marte-longe 3s steps(6) infinite alternate; }
+
+#ares-intro .flame {
+  transform-origin: 50% 0;
+  animation: ares-flame .2s steps(2) infinite alternate;
+}
+
+/* Lançamento: contagem 3-2-1, tremida, decolagem e fumaça */
+#ares-intro .cont { opacity: 0; animation: ares-num .6s steps(1) var(--d, 0s); }
+
+#ares-intro .decola {
+  animation:
+    ares-tremer .2s steps(2) 9,
+    ares-decolar 1.6s steps(8) 1.8s forwards;
+}
+
+#ares-intro .flame-late {
+  opacity: 0;
+  animation:
+    ares-acende .01s steps(1) 1.8s forwards,
+    ares-flame .2s steps(2) infinite alternate;
+}
+
+#ares-intro .fumaca-e { opacity: 0; animation: ares-fumaca-e 1s steps(5) calc(1.8s + var(--d, 0s)) infinite; }
+#ares-intro .fumaca-d { opacity: 0; animation: ares-fumaca-d 1s steps(5) calc(1.8s + var(--d, 0s)) infinite; }
+
+@keyframes ares-cena {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes ares-chamar {
+  0%, 100% { box-shadow: 3px 3px 0 #080407; }
+  50%      { box-shadow: 3px 3px 0 #080407, 0 0 0 3px #ff8a4c; }
+}
+
+@keyframes ares-piscar   { 50% { opacity: .25; } }
+@keyframes ares-respirar { 50% { transform: translateY(-3px); } }
+@keyframes ares-flutuar  { 50% { transform: translateY(-7px); } }
+@keyframes ares-pulo     { 50% { transform: translateY(-16px); } }
+@keyframes ares-passo    { 50% { transform: translateY(-5px); } }
+@keyframes ares-voar     { to  { transform: translateY(-5px); } }
+@keyframes ares-flame    { to  { transform: scaleY(.6); opacity: .7; } }
+@keyframes ares-earth    { to  { transform: scale(.7); opacity: .85; } }
+@keyframes ares-mars     { to  { transform: scale(1.06); } }
+@keyframes ares-marte-longe { to { transform: scale(1.8); } }
+@keyframes ares-tremer   { 50% { transform: translateX(3px); } }
+@keyframes ares-decolar  { to  { transform: translateY(-340px); } }
+@keyframes ares-acende   { to  { opacity: 1; } }
+@keyframes ares-caminhar {
+  from { transform: translateX(-260px); }
+  to   { transform: none; }
+}
+
+@keyframes ares-num {
+  0%, 99% { opacity: 1; }
+  100%    { opacity: 0; }
+}
+
+@keyframes ares-fumaca-e {
+  from { opacity: .9; transform: translateX(0) scale(.6); }
+  to   { opacity: 0;  transform: translateX(-70px) scale(1.8); }
+}
+
+@keyframes ares-fumaca-d {
+  from { opacity: .9; transform: translateX(0) scale(.6); }
+  to   { opacity: 0;  transform: translateX(70px) scale(1.8); }
+}
+
+@media (max-width: 520px) {
+  #ares-intro {
+    padding: 8px;
+  }
+
+  #ares-intro .intro-shell {
+    border-width: 3px;
+    box-shadow: 5px 5px 0 #080407;
+  }
+
+  #ares-intro .intro-top {
+    min-height: 42px;
+    padding: 8px 10px;
+    font-size: 8px;
+  }
+
+  #ares-intro .intro-top-dir {
+    gap: 8px;
+  }
+
+  #ares-intro .intro-progress {
+    gap: 4px;
+  }
+
+  #ares-intro .intro-progress i {
+    width: 9px;
+    height: 9px;
+  }
+
+  #ares-intro .intro-som {
+    padding: 5px 6px;
+    font-size: 8px;
+  }
+
+  #ares-intro .intro-art {
+    height: clamp(190px, 32vh, 260px);
+  }
+
+  #ares-intro .intro-copy {
+    min-height: 0;
+    padding: 18px 14px;
+  }
+
+  #ares-intro .intro-kicker {
+    font-size: 7px;
+  }
+
+  #ares-intro h1 {
+    font-size: 11px;
+  }
+
+  #ares-intro .intro-description {
+    font-size: 18px;
+  }
+
+  #ares-intro .intro-actions {
+    gap: 9px;
+    padding: 2px 12px 16px;
+  }
+
+  #ares-intro .intro-actions button {
+    min-width: 125px;
+    min-height: 46px;
+    font-size: 8px;
+  }
+
+  #ares-intro .intro-skip {
+    top: 48px;
+    right: 7px;
+    padding: 5px 7px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #ares-intro *,
+  #ares-intro *::before,
+  #ares-intro *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
