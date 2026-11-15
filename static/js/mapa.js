@@ -95,8 +95,8 @@
 
   function estrelas(qtd) {
     for (let i = 0; i < qtd; i++) {
-      const x = (i * 97) % W;
-      const y = (i * 53) % 120;
+      const x = Math.floor(((i * 0.7548776662 + 0.35) % 1) * W);
+      const y = Math.floor(((i * 0.5698402910 + 0.65) % 1) * H);
       R(x, y, 1, 1, (i + Math.floor(T / 20)) % 7 === 0 ? "#6a6a8a" : "#ffffff");
     }
   }
