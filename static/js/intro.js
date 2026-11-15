@@ -7,6 +7,7 @@
 
   // O tutorial do Orbi aguarda a abertura terminar.
   window.ARES_INTRO_ATIVA = true;
+  const t = (key) => window.I18N ? window.I18N.t(key) : key;
 
   /* =========================================================
      TRIPULAÇÃO (mesmas cores do TRIPULACAO do main.js)
@@ -109,45 +110,45 @@
      ========================================================= */
   const scenes = [
     {
-      tag: "CENTRO DE COMANDO • TERRA",
-      title: "UMA NOVA MISSÃO COMEÇA",
-      text: "Lia, Davi e Yara estão prontos! A humanidade vai dar um grande passo. Nosso destino: o planeta vermelho!",
+      tag: "intro_tag_0",
+      title: "intro_titulo_0",
+      text: "intro_texto_0",
       art: "earth"
     },
     {
-      tag: "EMBARQUE",
-      title: "HORA DE VESTIR O TRAJE!",
-      text: "A tripulação caminha até a nave ARES. Lia é a comandante, Davi é o engenheiro e Yara cuida das plantas.",
+      tag: "intro_tag_1",
+      title: "intro_titulo_1",
+      text: "intro_texto_1",
       art: "embark"
     },
     {
-      tag: "CONTAGEM REGRESSIVA",
-      title: "PREPARAR… 3, 2, 1…",
-      text: "Motores ligados! A nave ARES deixa a Terra levando toda a tripulação rumo ao espaço.",
+      tag: "intro_tag_2",
+      title: "intro_titulo_2",
+      text: "intro_texto_2",
       art: "launch"
     },
     {
-      tag: "DECOLAGEM COMPLETA",
-      title: "A TERRA FICOU PARA TRÁS",
-      text: "Os motores se acalmam e a Terra vai ficando pequenininha lá atrás.",
+      tag: "intro_tag_3",
+      title: "intro_titulo_3",
+      text: "intro_texto_3",
       art: "space"
     },
     {
-      tag: "DIÁRIO DE BORDO • DIA 01",
-      title: "SÓ VOCÊ, A EQUIPE E O ESPAÇO",
-      text: "Pela janela da nave, a tripulação vê as estrelas passarem. A viagem até Marte será longa: cada decisão importa!",
+      tag: "intro_tag_4",
+      title: "intro_titulo_4",
+      text: "intro_texto_4",
       art: "cabin"
     },
     {
-      tag: "ALERTA DA NAVE",
-      title: "RECURSOS LIMITADOS!",
-      text: "Ar, comida, escudo e comunicação precisam de energia. Distribua a energia com inteligência para manter todos em segurança.",
+      tag: "intro_tag_5",
+      title: "intro_titulo_5",
+      text: "intro_texto_5",
       art: "ship"
     },
     {
-      tag: "DESTINO À VISTA",
-      title: "MARTE NOS ESPERA!",
-      text: "Sua missão é montar uma base, cuidar da equipe e conquistar 30 pontos de ciência. Comandante, contamos com você!",
+      tag: "intro_tag_6",
+      title: "intro_titulo_6",
+      text: "intro_texto_6",
       art: "mars"
     }
   ];
@@ -183,15 +184,15 @@
       <rect class="anim fumaca-e" style="--d:.25s" x="380" y="280" width="20" height="20" fill="#d9b8a4"/>
       <rect class="anim fumaca-d" x="464" y="272" width="26" height="26" fill="#ffe9d6"/>
       <rect class="anim fumaca-d" style="--d:.25s" x="500" y="280" width="20" height="20" fill="#d9b8a4"/>
-      ${texto(450, 321, 15, "#ffd18c", "LANÇAMENTO AUTORIZADO")}`,
+      ${texto(450, 321, 15, "#ffd18c", t("intro_art_lancamento"))}`,
 
     // 4. A nave viajando, a Terra encolhendo
     space: () => `${FUNDO}${ESTRELAS}
       <g transform="translate(240 170) scale(.72)"><g class="anim earth">${TERRA}</g></g>
       <path d="M310 160Q430 70 540 135" fill="none" stroke="#ffd24a" stroke-width="3" stroke-dasharray="9 12"/>
       <g transform="translate(600 155) rotate(25) scale(.85)"><g class="anim voa">${foguete("flame", true)}</g></g>
-      ${texto(240, 275, 16, "#ffe9d6", "TERRA")}
-      ${texto(600, 275, 16, "#ffe9d6", "NAVE ARES")}`,
+      ${texto(240, 275, 16, "#ffe9d6", t("intro_art_terra"))}
+      ${texto(600, 275, 16, "#ffe9d6", t("intro_art_nave"))}`,
 
     // 5. Tripulação flutuando diante da janela, Marte bem pequeno ao longe
     cabin: () => `<rect width="900" height="330" fill="#172333"/>
@@ -205,7 +206,7 @@
       ${astro(T[0], 330, 160, 6, { costas: true, bob: "flutua", d: 0 })}
       ${astro(T[1], 414, 160, 6, { costas: true, bob: "flutua", d: .4 })}
       ${astro(T[2], 498, 160, 6, { costas: true, bob: "flutua", d: .8 })}
-      ${texto(450, 304, 15, "#d9b8a4", "DIA 01 • RUMO A MARTE")}`,
+      ${texto(450, 304, 15, "#d9b8a4", t("intro_art_dia"))}`,
 
     // 6. Painel da nave com a tripulação em frente
     ship: () => `${FUNDO}
@@ -214,10 +215,10 @@
       <rect x="130" y="55" width="210" height="125" fill="#101329" stroke="#6fd3ff" stroke-width="5"/>
       <g transform="translate(235 118) scale(.5)">${TERRA}</g>
       <g font-family="monospace" font-size="17" text-anchor="middle">
-        <g class="anim pisca" style="--d:0s"><rect x="385" y="60" width="150" height="48" fill="#21465a" stroke="#6fd3ff" stroke-width="4"/>${texto(460, 90, 17, "#6fd3ff", "O₂ AR")}</g>
-        <g class="anim pisca" style="--d:.3s"><rect x="565" y="60" width="190" height="48" fill="#24452d" stroke="#6be37a" stroke-width="4"/>${texto(660, 90, 17, "#6be37a", "COMIDA")}</g>
-        <g class="anim pisca" style="--d:.6s"><rect x="385" y="130" width="150" height="48" fill="#263d68" stroke="#4f8dff" stroke-width="4"/>${texto(460, 160, 17, "#9abaff", "ESCUDO")}</g>
-        <g class="anim pisca" style="--d:.9s"><rect x="565" y="130" width="190" height="48" fill="#3a2c55" stroke="#c59bff" stroke-width="4"/>${texto(660, 160, 17, "#d8bdff", "RÁDIO")}</g>
+        <g class="anim pisca" style="--d:0s"><rect x="385" y="60" width="150" height="48" fill="#21465a" stroke="#6fd3ff" stroke-width="4"/>${texto(460, 90, 17, "#6fd3ff", t("intro_art_ar"))}</g>
+        <g class="anim pisca" style="--d:.3s"><rect x="565" y="60" width="190" height="48" fill="#24452d" stroke="#6be37a" stroke-width="4"/>${texto(660, 90, 17, "#6be37a", t("intro_art_comida"))}</g>
+        <g class="anim pisca" style="--d:.6s"><rect x="385" y="130" width="150" height="48" fill="#263d68" stroke="#4f8dff" stroke-width="4"/>${texto(460, 160, 17, "#9abaff", t("intro_art_escudo"))}</g>
+        <g class="anim pisca" style="--d:.9s"><rect x="565" y="130" width="190" height="48" fill="#3a2c55" stroke="#c59bff" stroke-width="4"/>${texto(660, 160, 17, "#d8bdff", t("intro_art_radio"))}</g>
       </g>
       ${astro(T[0], 330, 236, 5, { bob: "respira", d: 0 })}
       ${astro(T[1], 420, 236, 5, { bob: "respira", d: .15 })}
@@ -233,7 +234,7 @@
       ${astro(T[0], 330, 200, 6, { bob: "pula", d: 0 })}
       ${astro(T[1], 414, 200, 6, { bob: "pula", d: .18 })}
       ${astro(T[2], 498, 200, 6, { bob: "pula", d: .36 })}
-      ${texto(450, 319, 15, "#ffe9d6", "MARTE • NOVO LAR, NOVOS DESAFIOS")}`
+      ${texto(450, 319, 15, "#ffe9d6", t("intro_art_marte"))}`
   };
 
   /* =========================================================
@@ -514,18 +515,19 @@
     root.id = "ares-intro";
     root.setAttribute("role", "dialog");
     root.setAttribute("aria-modal", "true");
-    root.setAttribute("aria-label", "Introdução da missão Projeto Ares");
+    root.setAttribute("aria-label", t("intro_aria"));
 
     root.innerHTML = `
       <div class="intro-shell">
         <div class="intro-top">
           <span>✦ PROJETO ARES</span>
           <span class="intro-top-dir">
-            <button class="intro-som secondary" type="button" data-intro="som" aria-pressed="false" aria-label="Ligar ou desligar a música"><svg class="ico" aria-hidden="true"><use href="#i-som"></use></svg> SOM</button>
-            <span class="intro-progress" aria-label="Progresso"></span>
+            <button class="intro-lang secondary" type="button" data-a="lang" aria-label="${t("intro_idioma_aria")}">PT / EN</button>
+            <button class="intro-som secondary" type="button" data-intro="som" aria-pressed="false" aria-label="${t("intro_som_aria")}"><svg class="ico" aria-hidden="true"><use href="#i-som"></use></svg> ${t("intro_som")}</button>
+            <span class="intro-progress" aria-label="${t("intro_progresso")}"></span>
           </span>
         </div>
-        <button class="intro-skip secondary" type="button" data-intro="skip">Pular abertura »</button>
+        <button class="intro-skip secondary" type="button" data-intro="skip">${t("intro_pular")}</button>
         <div class="intro-art" aria-hidden="true"></div>
         <div class="intro-copy" aria-live="polite">
           <div class="intro-kicker"></div>
@@ -533,8 +535,8 @@
           <p class="intro-description"></p>
         </div>
         <div class="intro-actions">
-          <button class="secondary" type="button" data-intro="back">« VOLTAR</button>
-          <button type="button" data-intro="next">PRÓXIMO »</button>
+          <button class="secondary" type="button" data-intro="back">${t("intro_voltar")}</button>
+          <button type="button" data-intro="next">${t("intro_proximo")}</button>
         </div>
       </div>`;
 
@@ -545,7 +547,8 @@
     const atualizarSom = () => {
       const mudo = Musica.estaMudo();
       // Mesmos ícones de pixel do botão de som do topo do jogo (definidos no index.html)
-      botaoSom.innerHTML = `<svg class="ico" aria-hidden="true"><use href="#${mudo ? "i-mudo" : "i-som"}"></use></svg> SOM`;
+      botaoSom.innerHTML = `<svg class="ico" aria-hidden="true"><use href="#${mudo ? "i-mudo" : "i-som"}"></use></svg> ${t("intro_som")}`;
+      botaoSom.setAttribute("aria-label", t("intro_som_aria"));
       botaoSom.setAttribute("aria-pressed", String(mudo));
       // Pisca chamando para ligar o som, até a música começar
       botaoSom.classList.toggle("chamar", !mudo && !Musica.tocando());
@@ -557,25 +560,31 @@
       root.querySelector(".intro-art").innerHTML =
         `<svg viewBox="0 0 900 330" preserveAspectRatio="xMidYMid slice">${art[scene.art]()}</svg>`;
 
-      root.querySelector(".intro-kicker").textContent = scene.tag;
-      root.querySelector("h1").textContent = scene.title;
-      root.querySelector(".intro-description").textContent = scene.text;
+      root.querySelector(".intro-kicker").textContent = t(scene.tag);
+      root.querySelector("h1").textContent = t(scene.title);
+      root.querySelector(".intro-description").textContent = t(scene.text);
+      root.setAttribute("aria-label", t("intro_aria"));
+      root.querySelector('[data-a="lang"]').setAttribute("aria-label", t("intro_idioma_aria"));
+      root.querySelector(".intro-progress").setAttribute("aria-label", t("intro_progresso"));
 
       root.querySelector(".intro-progress").innerHTML =
         scenes.map((_, i) => `<i class="${i <= index ? "active" : ""}"></i>`).join("");
 
       const back = root.querySelector('[data-intro="back"]');
+      back.textContent = t("intro_voltar");
       back.disabled = index === 0;
       back.style.opacity = index === 0 ? ".35" : "1";
 
       root.querySelector('[data-intro="next"]').textContent =
-        index === scenes.length - 1 ? "INICIAR MISSÃO 🚀" : "PRÓXIMO »";
+        t(index === scenes.length - 1 ? "intro_iniciar" : "intro_proximo");
+      root.querySelector('[data-intro="skip"]').textContent = t("intro_pular");
 
       root.querySelector('[data-intro="skip"]').hidden =
         index === scenes.length - 1;
 
       Musica.cena(scene.art);
     };
+    window.addEventListener("ares:idioma", render);
 
     const fechar = () => {
       // A música do jogo assume no lugar da abertura (respeitando o mudo)
@@ -588,6 +597,7 @@
           if (!mudoIntro && !window.TUTORIAL) window.SOM.iniciar();
         } catch (e) {}
       }
+      window.removeEventListener("ares:idioma", render);
       root.remove();
       window.ARES_INTRO_ATIVA = false;
       window.dispatchEvent(new Event("ares:intro:fechada"));

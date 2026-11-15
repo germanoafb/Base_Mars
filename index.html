@@ -411,6 +411,7 @@
       var acao = botao.dataset.a;
 
       if (acao === "mute") { window.SOM.alternarMudo(); atualizarBotao(); return; }
+      if (window.ARES_INTRO_ATIVA) return;
 
       window.SOM.iniciar();
       if (acao === "adj") window.SOM.tocar(botao.dataset.d === "1" ? "mais" : "menos");

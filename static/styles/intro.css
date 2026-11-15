@@ -225,6 +225,15 @@
   box-shadow: 3px 3px 0 #080407;
 }
 
+#ares-intro .intro-lang {
+  min-width: 0;
+  min-height: 0;
+  padding: 6px 8px;
+  border-width: 2px;
+  font: 8px/1.4 var(--fonte-titulo, monospace);
+  box-shadow: 3px 3px 0 #080407;
+}
+
 #ares-intro .intro-som[aria-pressed="false"] {
   color: #1a0f14;
   background: var(--intro-yellow);
@@ -355,7 +364,8 @@
     height: 9px;
   }
 
-  #ares-intro .intro-som {
+  #ares-intro .intro-som,
+  #ares-intro .intro-lang {
     padding: 5px 6px;
     font-size: 8px;
   }
