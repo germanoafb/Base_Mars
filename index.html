@@ -127,6 +127,18 @@
     O intro.js precisa vir ANTES do tutorial.js (o tutorial espera a abertura terminar).
     São scripts comuns (não "module") para funcionar até abrindo o arquivo direto.
   -->
+  <!--
+    MODO DEMONSTRAÇÃO (para a banca): abra o jogo com ?demo=1 na barra de endereços.
+    Pula a abertura e o tutorial e cai direto numa carta de decisão com minigame.
+    Tipos: ?demo=1 (poeira) | ?demo=solar | ?demo=filtro | ?demo=praga
+    O main.js, o intro.js e o tutorial.js leem esta variável.
+  -->
+  <script>
+    (function () {
+      var d = new URLSearchParams(location.search).get("demo");
+      if (d !== null) window.ARES_DEMO = d || "1";
+    })();
+  </script>
   <script src="static/js/i18n.js" defer></script>
   <script src="static/data/donki_flares.js" defer></script>
   <script src="static/js/game/nasa-data.js" defer></script>
@@ -410,7 +422,13 @@
       if (!botao || botao.disabled) return;
       var acao = botao.dataset.a;
 
-      if (acao === "mute") { window.SOM.alternarMudo(); atualizarBotao(); return; }
+      if (acao === "mute") {
+        window.SOM.alternarMudo();
+        atualizarBotao();
+        // O mesmo botão cala a voz do Orbi: quem quer silêncio quer silêncio de verdade
+        if (window.SOM.estaMudo() && window.ARES && window.ARES.calar) window.ARES.calar();
+        return;
+      }
       if (window.ARES_INTRO_ATIVA) return;
 
       window.SOM.iniciar();

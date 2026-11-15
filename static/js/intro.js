@@ -506,6 +506,8 @@
      TELA
      ========================================================= */
   function iniciar() {
+    // Modo demonstração (?demo=1): vai direto para a carta de decisão, sem abertura
+    if (window.ARES_DEMO) { window.ARES_INTRO_ATIVA = false; return; }
     if (document.getElementById("ares-intro")) return;
 
     const app = document.getElementById("app");
