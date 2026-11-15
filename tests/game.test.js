@@ -336,3 +336,45 @@ test("minigame: o debriefing elogia quem jogou bem e dá dica a quem foi mal", (
   assert.equal(pulou.certo.some((x) => x.chave === "fim_certo_minigame"), false, "pular não conta como jogar");
   assert.equal(pulou.dica.some((x) => x.chave === "fim_dica_minigame"), false);
 });
+// ---------- Bônus dos personagens ----------
+test("bônus do Davi (engenheiro): na poeira os painéis dão 6 (e não 4); fora dela, normal", () => {
+  const { jogo } = carregar();
+  const e = jogo.criarJogo("engenheiro");
+  assert.equal(jogo.energiaSolar(e), 8);
+  e.evento = { tipo: "poeira", visivel: true };
+  assert.equal(jogo.energiaSolar(e), 6);
+  const normal = jogo.criarJogo();
+  normal.evento = { tipo: "poeira", visivel: true };
+  assert.equal(jogo.energiaSolar(normal), 4);
+});
+
+test("bônus da Yara (botânica): cada ponto na estufa também dá +1 de ar", () => {
+  const { jogo } = carregar();
+  const normal = jogo.criarJogo();
+  const yara = jogo.criarJogo("botanica");
+  // alocação inicial: 2 pontos na estufa
+  assert.equal(jogo.previsao(yara).o2 - jogo.previsao(normal).o2, 2);
+  assert.equal(jogo.previsao(yara).comida, jogo.previsao(normal).comida);
+  assert.equal(jogo.efeitoDosSistemas(yara).o2 - jogo.efeitoDosSistemas(normal).o2, 2);
+});
+
+test("bônus da Lia (comandante): rádio com 3+ pontos envia +1 de ciência; com menos, nada extra", () => {
+  const { jogo } = carregar();
+  const fraco = jogo.criarJogo("comandante");          // começa com 2 no rádio
+  jogo.avancar(fraco, CALMO);
+  assert.equal(fraco.ciencia, 2);
+  const forte = jogo.criarJogo("comandante");
+  assert.ok(jogo.ajustar(forte, "comms", 1));           // 3 no rádio
+  assert.equal(jogo.efeitoDosSistemas(forte).comms, 4);
+  jogo.avancar(forte, CALMO);
+  assert.equal(forte.ciencia, 4);
+});
+
+test("sem personagem (ou desconhecido): nenhum bônus", () => {
+  const { jogo } = carregar();
+  const e = jogo.criarJogo("astronauta-misterioso");
+  assert.equal(e.especialidade, null);
+  assert.ok(jogo.ajustar(e, "comms", 1));
+  jogo.avancar(e, CALMO);
+  assert.equal(e.ciencia, 3);
+});

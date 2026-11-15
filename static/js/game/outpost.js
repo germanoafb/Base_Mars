@@ -33,6 +33,13 @@
     doseBoa: 300,              // abaixo disso o debriefing elogia
     radNaturalAno: 2.4,        // média mundial de radiação natural na Terra (mSv por ano)
     nivelBaixo: 30,            // abaixo disso o recurso "ficou baixo"
+    // Bônus de quem o jogador escolheu (um por personagem).
+    // Balanceados por simulação: cada um vale uns +3 a +6 pontos de ciência numa partida (meta: 30).
+    bonus: {
+      botanica:   { arPorPontoEstufa: 1 },          // Yara: fotossíntese, cada ponto na estufa também dá +1 de ar
+      engenheiro: { energiaNaPoeira: 2 },           // Davi: limpa os painéis, na poeira rende 6 de energia (e não 4)
+      comandante: { cienciaRadio: 1, radioMinimo: 3 }, // Lia: com 3+ pontos no rádio, +1 de ciência por turno
+    },
   };
 
   const SISTEMAS = ["o2", "food", "shield", "comms"];
@@ -41,8 +48,10 @@
   const soma = (a) => SISTEMAS.reduce((t, k) => t + a[k], 0);
 
   // ---------- Criar uma partida nova ----------
-  function criarJogo() {
+  // especialidade: "comandante" | "engenheiro" | "botanica" (o bônus do personagem escolhido)
+  function criarJogo(especialidade) {
     return {
+      especialidade: CONFIG.bonus[especialidade] ? especialidade : null,
       fase: "viagem",
       turno: 1,                       // turno dentro da fase atual
       o2: CONFIG.inicio.o2,
@@ -66,6 +75,18 @@
       : { tipo: "sol", n: e.turno };
   }
 
+  // Bônus do personagem: { energiaNaPoeira, arPorPontoEstufa, cienciaRadio, radioMinimo } (vazio = nenhum)
+  function bonusDe(e) {
+    return (e && CONFIG.bonus[e.especialidade]) || {};
+  }
+
+  // Ciência que o rádio envia neste turno (cada ponto = 1, mais o bônus da comandante com o rádio forte)
+  function cienciaDoTurno(e) {
+    const c = e.alocacao.comms;
+    const b = bonusDe(e);
+    return c + (b.cienciaRadio && c >= b.radioMinimo ? b.cienciaRadio : 0);
+  }
+
   // ---------- Energia ----------
   function energiaDisponivel(e) {
     return Math.max(0, energiaSolar(e) + e.bateria + (efeitoEscolhido(e).energia || 0));
@@ -73,7 +94,9 @@
 
   // Só o que os painéis geram neste turno (sem a bateria)
   function energiaSolar(e) {
-    return e.evento && e.evento.tipo === "poeira" ? CONFIG.energiaNaPoeira : CONFIG.energiaPorTurno;
+    return e.evento && e.evento.tipo === "poeira"
+      ? CONFIG.energiaNaPoeira + (bonusDe(e).energiaNaPoeira || 0)
+      : CONFIG.energiaPorTurno;
   }
 
   // ---------- Cartas de decisão ----------
@@ -132,7 +155,9 @@
     const ef = efeitoEscolhido(e);
     const naViagem = e.fase === "viagem";
     const gastoAr = CONFIG.consumo.o2 + (ef.consumoO2 || 0);
-    const o2 = limitar(Math.round(e.o2 + CONFIG.producao.o2 * a.o2 - gastoAr + (ef.o2 || 0)), 0, 100);
+    const b = bonusDe(e);
+    const arEstufa = (b.arPorPontoEstufa || 0) * a.food;
+    const o2 = limitar(Math.round(e.o2 + CONFIG.producao.o2 * a.o2 + arEstufa - gastoAr + (ef.o2 || 0)), 0, 100);
     const comida = limitar(Math.round(e.comida + CONFIG.producao.comida * a.food - CONFIG.consumo.comida + (ef.comida || 0)), 0, 100);
 
     const radComum = naViagem ? CONFIG.viagem.diasPorTurno * CONFIG.viagem.radDia : CONFIG.base.radSol;
@@ -162,11 +187,12 @@
   // Quanto cada sistema muda no turno (para mostrar ao lado dos botões)
   function efeitoDosSistemas(e) {
     const a = e.alocacao;
+    const b = bonusDe(e);
     return {
-      o2: Math.round(CONFIG.producao.o2 * a.o2 - CONFIG.consumo.o2),
+      o2: Math.round(CONFIG.producao.o2 * a.o2 + (b.arPorPontoEstufa || 0) * a.food - CONFIG.consumo.o2),
       food: Math.round(CONFIG.producao.comida * a.food - CONFIG.consumo.comida),
       shield: Math.round(CONFIG.escudo.tempestade * a.shield * 100),   // % de proteção na tempestade
-      comms: a.comms,
+      comms: cienciaDoTurno(e),
     };
   }
 
@@ -199,7 +225,7 @@
     e.comida = r.comida;
     e.rad = r.rad;
     e.bateria = Math.min(CONFIG.bateriaMax, sobra);   // o que sobrou fica guardado
-    e.ciencia += e.alocacao.comms;                     // cada ponto no rádio = 1 de ciência
+    e.ciencia += cienciaDoTurno(e);                    // cada ponto no rádio = 1 de ciência (+ bônus da comandante)
 
     // Diário de bordo
     if (ev && ev.tipo === "solar") {
@@ -312,6 +338,8 @@
     CONFIG,
     SISTEMAS,
     criarJogo,
+    bonusDe,
+    cienciaDoTurno,
     energiaDisponivel,
     energiaSolar,
     efeitoEscolhido,

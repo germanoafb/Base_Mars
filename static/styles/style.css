@@ -346,6 +346,13 @@ html[lang="en"] .btn-idioma .idioma-en {
 
 .astronauta-nome { font: .75rem var(--fonte-titulo); }
 .astronauta-papel { font-size: 1rem; color: var(--texto-suave); }
+/* Bônus do personagem: estrelinha + frase curta */
+/* Estrelinha à esquerda, frase ao lado (quebra de linha fica alinhada ao texto, não embaixo da estrela) */
+.astronauta-bonus { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: .9rem; line-height: 1.2; color: var(--energia); }
+.astronauta-bonus > .ico { width: 1.1em; height: 1.1em; flex: none; }
+.astronauta-bonus-texto { text-align: left; }
+.selo-bonus { display: inline-flex; color: var(--energia); cursor: help; }
+.selo-bonus .ico { width: 14px; height: 14px; }
 
 .astronauta-voce {
   display: inline-flex;
@@ -978,8 +985,9 @@ body.mini-aberto { overflow: hidden; }
 .mini-fato { padding: 8px; font-size: 1rem; color: var(--texto-suave); border: 3px dashed var(--linha); }
 .mini-fato b { color: var(--cor); }
 
-.mini-acoes { display: flex; flex-wrap: wrap; gap: 10px; }
-.mini-acoes .btn { flex: 1 1 auto; }
+.mini-acoes { display: flex; flex-direction: column; gap: 10px; }
+/* Botões da janela do minigame: largura toda, alinhados com a arena */
+.mini-acoes .btn { width: 100%; max-width: none; align-self: stretch; }
 
 /* Celular deitado: arena mais baixa para a janela caber */
 @media (max-height: 560px) {

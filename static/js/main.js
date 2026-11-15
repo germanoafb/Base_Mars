@@ -32,9 +32,9 @@
 
   // Tripulação: cor da pele, do cabelo e do traje (o mesmo do mapa)
   const TRIPULACAO = [
-    { nome: "Lia", papel: "papel_comandante", pele: "#f1c27d", cabelo: "#3b2a20", traje: "#ff8a4c" },
-    { nome: "Davi", papel: "papel_engenheiro", pele: "#8d5524", cabelo: "#1b1b1b", traje: "#6fd3ff" },
-    { nome: "Yara", papel: "papel_botanica", pele: "#e0ac69", cabelo: "#a0522d", traje: "#6ee08a" },
+    { nome: "Lia", papel: "papel_comandante", especialidade: "comandante", pele: "#f1c27d", cabelo: "#3b2a20", traje: "#ff8a4c" },
+    { nome: "Davi", papel: "papel_engenheiro", especialidade: "engenheiro", pele: "#8d5524", cabelo: "#1b1b1b", traje: "#6fd3ff" },
+    { nome: "Yara", papel: "papel_botanica", especialidade: "botanica", pele: "#e0ac69", cabelo: "#a0522d", traje: "#6ee08a" },
   ];
   const jogador = () => TRIPULACAO[ui.jogador];
 
@@ -145,6 +145,7 @@
           ${rosto(a)}
           <span class="astronauta-nome">${a.nome}</span>
           <span class="astronauta-papel">${t(a.papel)}</span>
+          <span class="astronauta-bonus">${ico("i-star")}<span class="astronauta-bonus-texto"><span class="sr-only">${t("bonus_rotulo")}: </span>${t("bonus_curto_" + a.especialidade)}</span></span>
           <span class="astronauta-voce">${meu ? ico("i-ok") + " " + t("voce") : t("escolher")}</span>
         </button>
       </li>`;
@@ -203,6 +204,16 @@
       : `<span class="previsao previsao--ruim">—</span>`;
   }
 
+  // Estrelinha do bônus do personagem no sistema que ele melhora (estufa, rádio ou energia)
+  const BONUS_SISTEMA = { botanica: "food", comandante: "comms", engenheiro: "energia" };
+  function seloBonus(e, lugar) {
+    const esp = e.especialidade;
+    if (!esp || BONUS_SISTEMA[esp] !== lugar) return "";
+    const quem = TRIPULACAO.find((p) => p.especialidade === esp);
+    const texto = esc(t("bonus_longo_" + esp, { nome: quem ? quem.nome : "" }));
+    return `<span class="selo-bonus" title="${texto}">${ico("i-star")}<span class="sr-only">${texto}</span></span>`;
+  }
+
   // Cartão de um sistema: ícone, nome, "?", efeito e os botões − e +
   function cartaoSistema(e, k) {
     const s = SISTEMA[k];
@@ -211,6 +222,7 @@
         <div class="sistema-topo">
           ${ico(s.icone)}
           <span class="sistema-nome">${t(s.nome)}</span>
+          ${seloBonus(e, k)}
           ${ajuda(t(`est_${k}_desc`), k === "o2" || k === "shield" ? "esq" : "dir")}
           ${efeitoHtml(e, k)}
         </div>
@@ -227,7 +239,7 @@
           ${ico("i-energy", "ico ico--energia")}
           <span class="energia-rotulo">${t("energia_livre")}</span>
           <span class="energia-valor"><b>${J.energiaLivre(e)}</b> ${t("de")} ${J.energiaDisponivel(e)}</span>
-          <span class="energia-detalhe">${ico("i-sol")} ${J.energiaSolar(e)} + ${ico("i-battery")} ${e.bateria}/${C.bateriaMax}</span>
+          <span class="energia-detalhe">${ico("i-sol")} ${J.energiaSolar(e)}${seloBonus(e, "energia")} + ${ico("i-battery")} ${e.bateria}/${C.bateriaMax}</span>
           ${ajuda(`${t("energia_paineis", { n: J.energiaSolar(e) })} + ${t("energia_bateria", { n: e.bateria, max: C.bateriaMax })}. ${t("energia_sobra", { max: C.bateriaMax })}`)}
         </div>
         <div class="sistemas">
@@ -597,7 +609,7 @@
         ui.nome = limparNome(ui.nome);
         ui.nomeErro = false;
         try { localStorage.setItem(CHAVE_NOME, ui.nome); } catch (e) { /* sem armazenamento: tudo bem */ }
-        ui.jogo = J.criarJogo();
+        ui.jogo = J.criarJogo(jogador().especialidade);
         ui.tela = "jogo";
         ui.recemAvancou = false;
       } else {
