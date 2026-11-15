@@ -392,7 +392,7 @@
           <li><button class="tut-sis ${s.cls}" type="button" data-tx="sis" data-k="${s.k}">
             ${ico(s.icone, "ico tut-sis-ico")}
             <span class="tut-sis-nome">${t(s.nome)}</span>
-            <span class="tut-sis-ok" aria-hidden="true">✓</span>
+            <span class="tut-sis-ok" aria-hidden="true">${ico("i-ok")}</span>
             <span class="sr-only tut-sis-sr"></span>
           </button></li>`).join("");
         return `<ul class="tut-sistemas">${botoes}</ul>`;
@@ -568,9 +568,9 @@
         <div class="sistema ${s.cls}">
           <div class="sistema-topo">${ico(s.icone)}<span class="sistema-nome">${t(s.nome)}</span></div>
           <div class="sistema-controles">
-            <button class="btn-passo" type="button" data-tx="adj" data-k="${s.k}" data-d="-1" aria-label="${esc(t("menos_" + s.k))}"${v <= 0 ? " disabled" : ""}>−</button>
+            <button class="btn-passo" type="button" data-tx="adj" data-k="${s.k}" data-d="-1" aria-label="${esc(t("menos_" + s.k))}"${v <= 0 ? " disabled" : ""}>${ico("i-menos")}</button>
             <span class="aloc-pontos" role="img" aria-label="${esc(t("pontos_aria", { n: v, max: C.maxPorSistema }))}">${pontos}</span>
-            <button class="btn-passo" type="button" data-tx="adj" data-k="${s.k}" data-d="1" aria-label="${esc(t("mais_" + s.k))}"${v >= C.maxPorSistema || livre <= 0 ? " disabled" : ""}>+</button>
+            <button class="btn-passo" type="button" data-tx="adj" data-k="${s.k}" data-d="1" aria-label="${esc(t("mais_" + s.k))}"${v >= C.maxPorSistema || livre <= 0 ? " disabled" : ""}>${ico("i-mais")}</button>
           </div>
         </div>`;
     };
@@ -624,7 +624,7 @@
 
         <div class="tut-rodape">
           <button class="btn btn-secundario" type="button" data-tut="voltar"></button>
-          <button class="btn btn-secundario tut-repetir" type="button" data-tut="repetir"><span aria-hidden="true">♪</span></button>
+          <button class="btn btn-secundario tut-repetir" type="button" data-tut="repetir">${ico("i-falar")}</button>
           <button class="btn btn-principal" type="button" data-tut="proximo"></button>
         </div>
         <button class="tut-pular" type="button" data-tut="pular"></button>
@@ -643,7 +643,7 @@
         <p class="tut-papel">${t("tut_papel")}</p>
         <h1 id="tut-titulo" class="tut-titulo-grande" tabindex="-1">${t("tut_boasvindas_titulo")}</h1>
         <p class="lead tut-lead">${t("tut_boasvindas_texto")}</p>
-        <button class="btn btn-principal btn--destaque" type="button" data-tut="comecar"><span aria-hidden="true">♪</span> ${t("tut_comecar")}</button>
+        <button class="btn btn-principal btn--destaque" type="button" data-tut="comecar">${ico("i-som", "ico ico--quadrado")} <span>${t("tut_comecar")}</span></button>
         <button class="tut-pular" type="button" data-tut="pular">${t("tut_pular")}</button>
       </div>`;
   }
@@ -710,7 +710,7 @@
       s.classList.toggle("tut-prog--atual", i === passo);
     });
     const voz = P('[data-tut="voz"]');
-    voz.textContent = vozLigada ? "♪" : "✕";
+    voz.innerHTML = ico(vozLigada ? "i-som" : "i-mudo");
     voz.setAttribute("aria-pressed", String(vozLigada));
     voz.setAttribute("aria-label", t(vozLigada ? "tut_voz_desligar" : "tut_voz_ligar"));
     const trocar = P('[data-tut="trocarvoz"]');

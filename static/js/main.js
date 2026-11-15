@@ -145,7 +145,7 @@
           ${rosto(a)}
           <span class="astronauta-nome">${a.nome}</span>
           <span class="astronauta-papel">${t(a.papel)}</span>
-          <span class="astronauta-voce">${meu ? "✓ " + t("voce") : t("escolher")}</span>
+          <span class="astronauta-voce">${meu ? ico("i-ok") + " " + t("voce") : t("escolher")}</span>
         </button>
       </li>`;
     }).join("");
@@ -188,9 +188,9 @@
     let pontos = "";
     for (let i = 0; i < C.maxPorSistema; i++) pontos += `<i${i < valor ? ' class="on"' : ""}></i>`;
     return `
-        <button class="btn-passo" type="button" data-a="adj" data-k="${k}" data-d="-1" aria-label="${esc(t("menos_" + k))}"${valor <= 0 ? " disabled" : ""}>−</button>
+        <button class="btn-passo" type="button" data-a="adj" data-k="${k}" data-d="-1" aria-label="${esc(t("menos_" + k))}"${valor <= 0 ? " disabled" : ""}>${ico("i-menos")}</button>
         <span class="aloc-pontos" role="img" aria-label="${esc(t("pontos_aria", { n: valor, max: C.maxPorSistema }))}">${pontos}</span>
-        <button class="btn-passo" type="button" data-a="adj" data-k="${k}" data-d="1" aria-label="${esc(t("mais_" + k))}"${valor >= C.maxPorSistema || livre <= 0 ? " disabled" : ""}>+</button>`;
+        <button class="btn-passo" type="button" data-a="adj" data-k="${k}" data-d="1" aria-label="${esc(t("mais_" + k))}"${valor >= C.maxPorSistema || livre <= 0 ? " disabled" : ""}>${ico("i-mais")}</button>`;
   }
 
   function efeitoHtml(e, k) {
@@ -287,7 +287,7 @@
       return `
           <button class="btn-escolha${faixa ? " btn-escolha--mini" : ""}" type="button" data-a="choose" data-id="${id}">
             <span class="escolha-texto">${t("op_" + id)}</span>
-            <span class="escolha-efeitos">${faixa ? `<span class="selo-mini">▶ ${t("mini_selo")}</span>` : ""}${chips}</span>
+            <span class="escolha-efeitos">${faixa ? `<span class="selo-mini">${ico("i-play")} ${t("mini_selo")}</span>` : ""}${chips}</span>
           </button>`;
     }).join("");
     return `
@@ -405,7 +405,7 @@
           ${painel(e)}
           <div class="jogo-acoes">
             <button class="btn btn-secundario btn-diario" type="button" data-a="log">${ico("i-log")} <span>${t("diario_curto")}</span></button>
-            <button class="btn btn-principal${dormir ? " btn--destaque" : ""}" type="button" data-a="next"${esperando ? ' disabled aria-describedby="dica-escolha"' : ""}>${dormir ? t("dormir") : t(chave)}</button>
+            <button class="btn btn-principal${dormir ? " btn--destaque" : ""}" type="button" data-a="next"${esperando ? ' disabled aria-describedby="dica-escolha"' : ""}><span>${dormir ? t("dormir") : t(chave)}</span>${dormir ? "" : ico("i-seta", "ico ico--seta")}</button>
           </div>
           ${esperando ? `<p class="dica-escolha" id="dica-escolha">${t("dica_escolha")}</p>` : ""}
         </div>
@@ -454,7 +454,8 @@
       <div class="cert">
         <h2 class="cert-titulo">${ico("i-star")} ${t("cert_secao", { nome: esc(nome) })}</h2>
         <canvas class="cert-canvas" id="cert-canvas" role="img" aria-label="${esc(t("cert_aria", { nome }))}"></canvas>
-        <button class="btn btn-principal" type="button" data-a="cert-baixar">${t("cert_baixar")}</button>
+        <button class="btn btn-principal cert-baixar" type="button" data-a="cert-baixar">${ico("i-baixar", "ico ico--quadrado")} <span>${t("cert_baixar")}</span></button>
+        <p class="cert-aviso" role="status" aria-live="polite"></p>
       </div>`;
   }
 
@@ -497,7 +498,7 @@
         <h2>${ico("i-idea")} ${t("proxima")}</h2>
         <ul>${lista(r.dica)}</ul>
       </div>
-      <button class="btn btn-principal" type="button" data-a="restart">${t("jogar_de_novo")}</button>
+      <button class="btn btn-principal" type="button" data-a="restart">${ico("i-denovo", "ico ico--quadrado")} <span>${t("jogar_de_novo")}</span></button>
     </section>`;
   }
 
@@ -635,7 +636,27 @@
       }
     } else if (acao === "cert-baixar") {
       const cv = app.querySelector("#cert-canvas");
-      if (cv && ui.certificado && window.ARES.certificado) window.ARES.certificado.baixar(cv, ui.certificado);
+      const botao = app.querySelector('[data-a="cert-baixar"]');
+      const aviso = app.querySelector(".cert-aviso");
+      if (cv && ui.certificado && window.ARES.certificado && botao && !botao.disabled) {
+        botao.disabled = true;
+        window.ARES.certificado.baixar(cv, ui.certificado).then((ok) => {
+          if (window.SOM && ok) window.SOM.tocar("proximo");
+          botao.classList.toggle("cert-baixar--ok", ok);
+          if (ok) botao.innerHTML = `${ico("i-ok", "ico ico--quadrado")} <span>${t("cert_baixado")}</span>`;
+          if (aviso) {                          // sucesso: só o leitor de tela anuncia (o botão já mostra)
+            aviso.classList.toggle("sr-only", ok);
+            aviso.textContent = ok ? t("cert_baixado") : t("cert_erro");
+          }
+          setTimeout(() => {
+            if (!botao.isConnected) return;
+            botao.disabled = false;
+            botao.classList.remove("cert-baixar--ok");
+            botao.innerHTML = `${ico("i-baixar", "ico ico--quadrado")} <span>${t("cert_baixar")}</span>`;
+            if (aviso) aviso.textContent = "";
+          }, 2500);
+        });
+      }
     } else if (acao === "log") {
       ui.tela = "diario";
       desenhar({ foco: "titulo" });

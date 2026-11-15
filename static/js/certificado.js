@@ -73,6 +73,14 @@
     return logoNasa;
   }
 
+  // Plano B para navegadores que ignoram textRendering: um separador invisível entre "f" e "i"/"l"
+  function semLigadura(v) {
+    if (typeof v === "string") return v.replace(/f(?=[il])/g, "f\u200C");
+    const o = {};
+    Object.keys(v).forEach((k) => { o[k] = semLigadura(v[k]); });
+    return o;
+  }
+
   // ---------- Ajudantes de desenho ----------
   function pixels(ctx, retangulos, x, y, escala, cor) {
     ctx.fillStyle = cor;
@@ -151,7 +159,10 @@
     canvas.width = L;
     canvas.height = A;
     const ctx = canvas.getContext("2d");
-    const tx = d.textos || {};
+    // A Pixelify Sans junta "fi" num desenho que parece um "A" ("Am" em vez de "fim"): desliga as ligaduras
+    try { ctx.textRendering = "optimizeSpeed"; } catch (e) { /* navegador antigo */ }
+    const tx = semLigadura(d.textos || {});
+    d = Object.assign({}, d, { nome: semLigadura(d.nome || "") });
     ctx.textBaseline = "alphabetic";
     ctx.textAlign = "left";
 
@@ -267,6 +278,7 @@
 
     try {
       salvar(await paraBlob(canvas));
+      return true;
     } catch (e) {
       // Abrindo o index.html direto do computador (file://), o navegador "trava" o canvas por causa
       // da imagem do logo. Plano B: desenha de novo, sem o logo, só para baixar.
@@ -274,7 +286,8 @@
         const copia = document.createElement("canvas");
         await desenhar(copia, d, { semLogo: true });
         salvar(await paraBlob(copia));
-      } catch (e2) { /* sem como baixar neste navegador */ }
+        return true;
+      } catch (e2) { return false; /* sem como baixar neste navegador */ }
     }
   }
 

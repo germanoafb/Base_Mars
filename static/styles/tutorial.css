@@ -215,7 +215,9 @@ TUTORIAL COM O ORBI (usa as cores e peças de style.css)
 }
 .tut-rodape .btn { width: auto; padding: 10px 14px; font-size: .7rem; }
 .tut-rodape .btn-principal { width: 100%; }
-.tut-repetir { min-width: 56px; font-size: 1.2rem !important; }
+.tut-repetir { min-width: 56px; }
+.tut-repetir .ico { width: 22px; height: 22px; }
+.tut-voz .ico { width: 20px; height: 20px; }
 .tut-rodape .btn:disabled { opacity: .35; cursor: not-allowed; }
 
 
@@ -300,7 +302,8 @@ TUTORIAL COM O ORBI (usa as cores e peças de style.css)
 .tut-sis:hover { border-color: var(--cor); }
 .tut-sis:active { transform: translate(3px, 3px); box-shadow: none; }
 .tut-sis-ico { width: 40px; height: 40px; color: var(--cor); }
-.tut-sis-ok { position: absolute; top: 4px; right: 6px; display: none; font: .9rem var(--fonte-titulo); color: var(--bom); }
+.tut-sis-ok { position: absolute; top: 6px; right: 6px; display: none; line-height: 0; color: var(--bom); }
+.tut-sis-ok .ico { width: 14px; height: 14px; }
 .tut-sis--visto { border-color: var(--cor); background: var(--cartao-2); }
 .tut-sis--visto .tut-sis-ok { display: block; }
 

@@ -84,9 +84,9 @@
         <p class="dica-selo">${t("dica_selo")}</p>
         <h2 class="dica-titulo" id="dica-titulo">${t(`dica_${ctx}_titulo`, NUMEROS)}</h2>
         <p class="dica-texto">${t(`dica_${ctx}_texto`, NUMEROS)}</p>
-        <button class="btn btn-principal dica-ok" type="button" data-dica="ok">${ico("i-ship")} ${t("dica_entendi")}</button>
+        <button class="btn btn-principal dica-ok" type="button" data-dica="ok">${ico("i-ship")} <span>${t("dica_entendi")}</span></button>
       </div>
-      <button class="dica-x" type="button" data-dica="fechar" aria-label="${t("dica_fechar")}"><span aria-hidden="true">×</span></button>`;
+      <button class="dica-x" type="button" data-dica="fechar" aria-label="${t("dica_fechar")}">${ico("i-x")}</button>`;
   }
 
   function abrir(ctx) {

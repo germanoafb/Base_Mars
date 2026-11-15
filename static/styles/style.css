@@ -60,6 +60,8 @@
 }
 
 html { -webkit-text-size-adjust: 100%; }
+/* A Pixelify Sans desenha "fi" parecido com um "A" ("Acou" em vez de "ficou"): sem ligaduras */
+html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "clig" 0; }
 
 /* Fundo: céu escuro com algumas estrelas quadradinhas */
 body {
@@ -247,6 +249,9 @@ html[lang="en"] .btn-idioma .idioma-en {
 .btn-principal:hover { background: #ffa06a; }
 .btn-principal:active { transform: translate(4px, 4px); box-shadow: inset -4px -4px 0 var(--acento-escuro); }
 .btn-principal .ico { width: 2.4em; height: 1.2em; }
+/* Ícones quadrados (seta, som) dentro do botão: sem esticar como a nave */
+.btn-principal .ico--seta { width: 1.1em; height: 1.1em; }
+.btn-principal .ico--quadrado { width: 2em; height: 2em; }
 
 .btn-principal:disabled {
   opacity: .45;
@@ -276,7 +281,13 @@ html[lang="en"] .btn-idioma .idioma-en {
   border: var(--borda) solid var(--linha);
   box-shadow: 3px 3px 0 var(--sombra);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
+
+.btn-passo .ico { width: 16px; height: 16px; }
 
 .btn-passo:hover { background: #6a3446; }
 .btn-passo:active { transform: translate(3px, 3px); box-shadow: none; }
@@ -337,7 +348,10 @@ html[lang="en"] .btn-idioma .idioma-en {
 .astronauta-papel { font-size: 1rem; color: var(--texto-suave); }
 
 .astronauta-voce {
-  font: .55rem var(--fonte-titulo);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: .55rem/1 var(--fonte-titulo);
   text-transform: uppercase;
   color: var(--texto-suave);
 }
@@ -727,7 +741,16 @@ html[lang="en"] .btn-idioma .idioma-en {
   background: var(--cartao-2);
 }
 
-.btn-escolha.escolhida .escolha-texto::before { content: "✓ "; color: var(--cor, var(--energia)); }
+.btn-escolha.escolhida .escolha-texto::before {
+  content: "";
+  display: inline-block;
+  width: .9em; height: .9em;
+  margin-right: .4em;
+  vertical-align: -.05em;
+  background: var(--cor, var(--energia));
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' shape-rendering='crispEdges'%3E%3Cpath d='M10 2h2v2h-1v1h-1v1h-1v1h-1v1h-1v1h-1v1h-2v-1h-1v-1h-1v-1h-1v-1h-1v-1h2v1h1v1h1v1h1v-1h1v-1h1v-1h1v-1h1z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' shape-rendering='crispEdges'%3E%3Cpath d='M10 2h2v2h-1v1h-1v1h-1v1h-1v1h-1v1h-1v1h-2v-1h-1v-1h-1v-1h-1v-1h-1v-1h2v1h1v1h1v1h1v-1h1v-1h1v-1h1v-1h1z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
 
 .escolha-efeitos { display: flex; flex-wrap: wrap; gap: 6px; }
 
@@ -757,12 +780,14 @@ html[lang="en"] .btn-idioma .idioma-en {
 .selo-mini {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   padding: 0 8px;
   font-size: .95rem;
   font-weight: 700;
   color: var(--fundo);
   background: var(--cor, var(--energia));
 }
+.selo-mini .ico { width: .7em; height: .7em; }
 
 /* Janela por cima de tudo (o fundo não rola enquanto ela está aberta) */
 body.mini-aberto { overflow: hidden; }
@@ -898,7 +923,15 @@ body.mini-aberto { overflow: hidden; }
   box-shadow: 3px 3px 0 var(--sombra);
 }
 .parafuso--ok { background: var(--bom); border-color: #fff; opacity: .6; box-shadow: none; }
-.parafuso--ok::after { content: "✓"; font-size: .8rem; margin-left: 2px; }
+.parafuso--ok::after {
+  content: "";
+  display: inline-block;
+  width: .7em; height: .7em;
+  margin-left: 2px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' shape-rendering='crispEdges'%3E%3Cpath d='M10 2h2v2h-1v1h-1v1h-1v1h-1v1h-1v1h-1v1h-2v-1h-1v-1h-1v-1h-1v-1h-1v-1h2v1h1v1h1v1h1v-1h1v-1h1v-1h1v-1h1z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' shape-rendering='crispEdges'%3E%3Cpath d='M10 2h2v2h-1v1h-1v1h-1v1h-1v1h-1v1h-1v1h-2v-1h-1v-1h-1v-1h-1v-1h-1v-1h2v1h1v1h1v1h1v-1h1v-1h1v-1h1v-1h1z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
 .parafuso--erro { animation: chacoalhar .3s steps(3); border-color: var(--ruim); }
 .arena--travada { outline: 4px dashed var(--ruim); outline-offset: -4px; }
 
@@ -1140,7 +1173,8 @@ body.mini-aberto { overflow: hidden; }
 }
 
 .jogo-acoes .btn-principal { flex: 1; max-width: none; align-self: stretch; }
-.btn-diario { width: auto; flex: 0 0 auto; padding: 8px 10px; font-size: .6rem; align-self: stretch; }
+.btn-diario { width: auto; flex: 0 0 auto; padding: 8px 12px; gap: 8px; font-size: .6rem; align-self: stretch; }
+.btn-diario .ico { width: 1.8em; height: 1.8em; }
 
 /* Personagem foi até a cama: o botão de dormir pisca de leve */
 .btn--destaque { animation: chamar 1s steps(2) infinite; }
@@ -1280,14 +1314,20 @@ body.mini-aberto { overflow: hidden; }
   .tela--lancamento .mapa-canvas--enfeite { flex: 1 1 55%; max-width: none; }
   .lancamento-texto { flex: 1 1 45%; display: flex; flex-direction: column; gap: 14px; }
   .lancamento-texto .tripulacao { justify-content: flex-start; }
-  .lancamento-texto .btn-principal { align-self: flex-start; }
+  .lancamento-texto .tripulacao li { max-width: none; }
+  .lancamento-texto .btn-principal { align-self: stretch; max-width: none; }
 }
 
 
 /* Botões do topo (som + idioma) */
-.topo-botoes { display: flex; align-items: center; gap: 10px; }
+.topo-botoes { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+/* Celular: os 4 botões não cabem junto com o nome; fica só o planetinha como marca */
+@media (max-width: 520px) {
+  .marca-nome { display: none; }
+  .topo-botoes { gap: 8px; }
+}
 .btn-idioma { justify-content: center; }
-.btn-tut, .btn-som { padding: 0; }
+.btn-tut, .btn-som, .btn-dica { padding: 0; }
 .btn-tut .ico, .btn-som .ico { width: 22px; height: 22px; }
 
 
@@ -1335,6 +1375,9 @@ body.mini-aberto { overflow: hidden; }
   box-shadow: var(--bloco);
 }
 .cert-sem { max-width: 32rem; }
+.cert-baixar--ok:disabled { opacity: 1; cursor: default; color: #0f2a14; background: var(--bom); box-shadow: inset -4px -4px 0 #2f9a4c, var(--bloco); }
+.cert-aviso { margin: 0; max-width: 32rem; font-weight: 700; color: var(--ruim); text-align: center; }
+.cert-aviso:empty { display: none; }
 
 /* ===================== DICAS DO ORBI (cartão de orientação nas telas de missão) ===================== */
 .btn-dica { color: var(--energia); }
@@ -1361,14 +1404,16 @@ body.mini-aberto { overflow: hidden; }
 .dica-titulo { margin: 4px 0 6px; font-family: var(--fonte-titulo); font-size: 13px; line-height: 1.4; color: var(--acento); }
 .dica-texto { margin: 0 0 10px; font-size: 18px; line-height: 1.35; }
 .dica-texto b { color: var(--energia); }
-.dica-ok { width: 100%; }
+.dica-ok { width: 100%; font-size: .7rem; text-wrap: balance; }
 
 .dica-x {
   position: absolute; top: 4px; right: 6px;
   width: 36px; height: 36px;
-  font-size: 24px; line-height: 1; color: var(--texto-suave);
+  display: inline-flex; align-items: center; justify-content: center; padding: 0;
+  color: var(--texto-suave);
   background: transparent; border: 0; border-radius: 8px; cursor: pointer;
 }
+.dica-x .ico { width: 14px; height: 14px; }
 .dica-x:hover { color: var(--texto); background: rgba(255, 233, 214, .1); }
 .dica-x:focus-visible { outline: 3px solid var(--energia); outline-offset: 2px; }
 
