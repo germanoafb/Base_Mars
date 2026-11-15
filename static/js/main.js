@@ -129,9 +129,9 @@
     const erro = ui.nomeErro;
     return `
         <div class="campo-nome${erro ? " campo-nome--erro" : ""}">
-          <label class="campo-nome-rotulo" for="nome-jogador">${t("nome_rotulo")}</label>
-          <input class="campo-nome-input" id="nome-jogador" type="text" maxlength="${NOME_MAX}" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" aria-required="true" aria-describedby="nome-dica" placeholder="${esc(t("nome_placeholder"))}" value="${esc(ui.nome)}"${erro ? ' aria-invalid="true"' : ""}>
-          <p class="campo-nome-dica${erro ? " campo-nome-dica--erro" : ""}" id="nome-dica"${erro ? ' role="alert"' : ""}>${t(erro ? "nome_erro" : "nome_dica")}</p>
+          <label class="campo-nome-rotulo" for="nome-jogador">${t("nome_pedido")}</label>
+          <input class="campo-nome-input" id="nome-jogador" type="text" maxlength="${NOME_MAX}" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" aria-required="true" value="${esc(ui.nome)}"${erro ? ' aria-invalid="true" aria-describedby="nome-erro"' : ""}>
+          ${erro ? `<p class="campo-nome-dica campo-nome-dica--erro" id="nome-erro" role="alert">${t("nome_erro")}</p>` : ""}
         </div>`;
   }
 
@@ -662,12 +662,8 @@
       if (caixa) {
         caixa.classList.remove("campo-nome--erro");
         campo.removeAttribute("aria-invalid");
-        const dica = caixa.querySelector(".campo-nome-dica");
-        if (dica) {
-          dica.classList.remove("campo-nome-dica--erro");
-          dica.removeAttribute("role");
-          dica.textContent = t("nome_dica");
-        }
+        campo.removeAttribute("aria-describedby");
+        caixa.querySelector(".campo-nome-dica")?.remove();
       }
     }
   });

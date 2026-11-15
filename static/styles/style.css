@@ -1286,7 +1286,9 @@ body.mini-aberto { overflow: hidden; }
 
 /* Botões do topo (som + idioma) */
 .topo-botoes { display: flex; align-items: center; gap: 10px; }
-.btn-som { min-width: 48px; font-size: 18px; }
+.btn-idioma { justify-content: center; }
+.btn-tut, .btn-som { padding: 0; }
+.btn-tut .ico, .btn-som .ico { width: 22px; height: 22px; }
 
 
 /* ---------- CAMPO DE NOME e CERTIFICADO ---------- */
@@ -1311,7 +1313,7 @@ body.mini-aberto { overflow: hidden; }
 }
 .campo-nome-input::placeholder { color: var(--texto-suave); opacity: .7; }
 .campo-nome-input:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; border-color: var(--acento); }
-.campo-nome-dica { font-size: .95rem; color: var(--texto-suave); }
+.campo-nome-dica { font-size: .95rem; }
 .campo-nome--erro .campo-nome-input { border-color: var(--ruim); }
 .campo-nome-dica--erro { color: var(--ruim); font-weight: 600; }
 

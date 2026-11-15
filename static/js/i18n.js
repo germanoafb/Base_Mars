@@ -22,6 +22,8 @@ const TEXTOS = {
     papel_engenheiro: "Engenheiro",
     papel_botanica: "Botânica",
     lancar: "Lançar a nave!",
+    nome_pedido: "Escreva seu nome aqui. Ele vai no seu certificado da missão!",
+    nome_erro: "Antes de lançar a nave, escreva seu nome!",
     tut_abrir: "Como jogar",
 
     energia_livre: "Energia livre",
@@ -361,6 +363,8 @@ const TEXTOS = {
     papel_engenheiro: "Engineer",
     papel_botanica: "Botanist",
     lancar: "Launch the ship!",
+    nome_pedido: "Type your name here. It goes on your mission certificate!",
+    nome_erro: "Before launching the ship, type your name!",
     tut_abrir: "How to play",
 
     energia_livre: "Free power",

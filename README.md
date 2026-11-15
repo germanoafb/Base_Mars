@@ -49,13 +49,13 @@ Base_Mars/
 
 ### Rodar localmente
 Basta abrir o `index.html` no navegador (os scripts são comuns, funcionam sem servidor).
-Se preferir um servidor:
+Se preferir um servidor (não precisa de `npm install`):
 
 ```
-python3 -m http.server 8000
+npm start
 ```
 
-e abra http://localhost:8000.
+e abra http://localhost:8000. (`python3 -m http.server 8000` também funciona.)
 
 ### Testes
 ```
