@@ -1,0 +1,7 @@
+# A Vercel só precisa do site estático (index.html + static/).
+# Sem isto, ela vê o requirements.txt e acha que o projeto é Python.
+scripts_backend/
+tests/
+node_modules/
+.playwright-mcp/
+.env
